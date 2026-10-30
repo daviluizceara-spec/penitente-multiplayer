@@ -65,6 +65,22 @@ function cleanWorld(w){
       solids:arr(w.solids,240),vzG:arr(w.vzG,80),
       bossStarted:!!w.bossStarted,bossKilled:!!w.bossKilled,exitOpen:!!w.exitOpen,
       cp:w.cp&&typeof w.cp==='object'?{x:num(w.cp.x,0,1000000)}:null,
+      boss:w.boss&&typeof w.boss==='object'?w.boss:null,
+      encounter:w.encounter&&typeof w.encounter==='object'?{
+        id:typeof w.encounter.id==='string'?w.encounter.id.slice(0,100):null,
+        area:num(w.encounter.area,0,5),sec:num(w.encounter.sec,-1,100),
+        state:String(w.encounter.state||'play').slice(0,16),
+        clearT:num(w.encounter.clearT,0,10000),
+        cine:w.encounter.cine&&typeof w.encounter.cine==='object'?w.encounter.cine:null,
+        lock:w.encounter.lock&&typeof w.encounter.lock==='object'?w.encounter.lock:null,
+        exitOpen:!!w.encounter.exitOpen,
+        arena:w.encounter.arena&&typeof w.encounter.arena==='object'?w.encounter.arena:null,
+        bossKilled:!!w.encounter.bossKilled
+      }:null,
+      clearT:num(w.clearT,0,10000),
+      cine:w.cine&&typeof w.cine==='object'?w.cine:null,
+      lock:w.lock&&typeof w.lock==='object'?w.lock:null,
+      arena:w.arena&&typeof w.arena==='object'?w.arena:null,
       stats:w.stats&&typeof w.stats==='object'?{kills:num(w.stats.kills,0,1e9),bossDmg:num(w.stats.bossDmg,0,1e9)}:{}
     };
     const raw=JSON.stringify(clean);
@@ -86,6 +102,7 @@ io.on('connection',socket=>{
     const code=String(data.code||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6);
     const room=rooms.get(code);
     if(!room)return ack({ok:false,error:'Sala não encontrada. Confira o código.'});
+    if(room.started)return ack({ok:false,error:'A partida já começou. Crie uma nova sala para entrar.'});
     if(room.players.size>=2)return ack({ok:false,error:'A sala já está cheia.'});
     leaveRoom(socket);
     room.players.set(socket.id,{name:cleanName(data.name)});
@@ -117,6 +134,7 @@ io.on('connection',socket=>{
     if(now-last<65)return;
     lastWorld.set(socket.id,now);
     const world=cleanWorld(data.world);if(!world)return;
+    room.worldState=world;
     socket.to(code).emit('world-state',world);
   });
   // Golpes do convidado são encaminhados ao anfitrião para aplicar no inimigo real.
@@ -124,16 +142,22 @@ io.on('connection',socket=>{
     const code=String(data.code||''),room=rooms.get(code);
     if(!room||socketRoom.get(socket.id)!==code||room.host===socket.id||room.mode!=='coop'||!room.started)return;
     const now=Date.now(),last=lastHit.get(socket.id)||0;
-    if(now-last<35)return;
+    if(now-last<70)return;
     lastHit.set(socket.id,now);
+    const enemyId=typeof data.enemyId==='string'&&/^[a-zA-Z0-9:_-]{1,100}$/.test(data.enemyId)
+      ?data.enemyId:num(data.enemyId,1,1e9);
+    const base=num(data.base,0,250);
+    if(!enemyId||!base)return;
     const options={};
     for(const k of ['src','kx','ky','stun','quiet','fromX','noKb','heavy','dot','finisher']){
       const v=(data.options||{})[k];
       if(['string','number','boolean'].includes(typeof v))options[k]=v;
     }
+    if(options.src!==undefined&&!['sword','heavy','counter','chain','fire','tele','burn'].includes(options.src))return;
+    for(const k of ['kx','ky','stun'])if(options[k]!==undefined)options[k]=num(options[k],-500,500);
+    if(options.fromX!==undefined)options.fromX=num(options.fromX,-100000,1000000);
     io.to(room.host).emit('combat-hit',{
-      enemyId:num(data.enemyId,1,1e9),base:num(data.base,0,100000),
-      fromX:num(data.fromX,-100000,1000000),options
+      enemyId,base,fromX:num(data.fromX,-100000,1000000),options
     });
   });
   // Coleta de itens do convidado: remove o item do mundo compartilhado no anfitrião.

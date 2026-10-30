@@ -1,67 +1,53 @@
-# Penitente: Inferno Eterno — Multiplayer Online v2
+# Penitente: Inferno Eterno — Multiplayer V3
 
-Esta versão atualiza **o HTML do jogo e o servidor Socket.IO**. Os dois precisam ser atualizados para que os novos eventos funcionem.
+## O que foi corrigido
 
-## O que entrou nesta versão
+- Chefes recebem um identificador de rede estável baseado na área/encontro e tipo.
+- O snapshot do anfitrião agora inclui a entidade completa do chefe e o estado do encontro: fase global (`cine`/`play`/`bossdie`), temporizador de morte, cinemática, trava da arena e estado da arena.
+- O convidado deixa de executar a IA do chefe durante a cinemática e a morte. A posição, vida, fase, telegráficos, estados e projéteis vêm dos snapshots do anfitrião.
+- O dano do convidado continua sendo uma solicitação ao anfitrião; o servidor valida sala, papel, modo, frequência, identificador e limites básicos da solicitação. O anfitrião só aplica o dano se encontrar a entidade de rede no mundo atual.
+- A conclusão da luta abre a saída nos dois clientes. O convidado registra o desbloqueio local da área sem executar novamente as recompensas do anfitrião.
+- O servidor recusa entrada tardia em uma partida já iniciada, evitando que um cliente entre com o mundo local ainda não sincronizado.
 
-### Cooperativo (2 jogadores)
-- O anfitrião passa a enviar snapshots do mundo compartilhado.
-- Inimigos, estados de chefes, projéteis, perigos de cenário, itens no chão e alguns estados de checkpoint são sincronizados.
-- O convidado envia os golpes contra inimigos ao anfitrião, que aplica o dano no inimigo compartilhado.
-- A IA dos inimigos pode escolher o jogador mais próximo como alvo.
-- Dano corpo a corpo recebido pelo convidado é encaminhado pelo anfitrião.
-- Itens coletados pelo convidado são removidos do mundo do anfitrião e a recompensa também é aplicada a ele.
-- Reanimação: se um jogador cair, o parceiro deve ficar perto e manter um botão de ataque pressionado (golpe rápido, pesado ou arpão) até a reanimação completar.
-- HUD com nome e barra de vida do parceiro.
+## Instalação
 
-### PvP
-- Eventos de ataques básicos entre jogadores.
-- Dano, direção, alcance e estado de invulnerabilidade são considerados na troca de golpes.
-- HUD do adversário com barra de vida.
+Requer Node.js 18 ou superior.
 
-## Como atualizar o servidor que já está no Render
+```bash
+npm install
+npm start
+```
 
-1. Abra o repositório GitHub que você já conectou ao Render.
-2. Envie os arquivos deste ZIP para a raiz do repositório:
-   - `server.js`
-   - `package.json`
-   - `Penitente_Inferno_Eterno_Multiplayer.html`
-   - `README.md`
-3. Quando o GitHub perguntar, confirme a substituição dos arquivos existentes.
-4. Faça o commit das alterações.
-5. No Render, aguarde o deploy terminar e o serviço ficar **Live**.
+O servidor continua usando Socket.IO 4.8.1. Publique `server.js` e `package.json` no serviço de hospedagem (por exemplo, Render).
 
-O comando de inicialização continua sendo `npm start`. O Render deve detectar a alteração e fazer novo deploy automaticamente.
+Os dois jogadores devem abrir o arquivo `Penitente_Inferno_Eterno_Multiplayer_V3.html` e conectar ao mesmo endereço de servidor. Para iniciar, o anfitrião cria a sala e inicia a partida com o convidado já conectado.
 
-## Como atualizar os celulares
+## Testes realizados nesta entrega
 
-1. Envie o novo HTML para os dois jogadores (Drive, WhatsApp ou outro meio).
-2. Os dois devem abrir **essa mesma versão atualizada** no navegador.
-3. Entrem no menu Multiplayer Online.
-4. Coloquem o mesmo endereço do servidor Render.
-5. Conectem, criem/entrem na sala e iniciem a partida.
+- Verificação sintática de `server.js` com `node --check`.
+- Verificação sintática do JavaScript embutido no HTML com `node --check`.
+- Inspeção estática dos caminhos de criação de chefes, dano, snapshots, aplicação de snapshots e transições de estado.
+- Verificação de que o convidado não executa a IA do chefe durante `cine` e `bossdie`.
 
-Não basta atualizar apenas o servidor ou apenas o HTML: **os dois precisam estar na versão v2**.
+## Testes que ainda precisam ser feitos
 
-## Limitações que ainda precisam de uma etapa de acabamento
+Não foram executados testes reais com dois dispositivos nem uma sessão Socket.IO hospedada. Antes de usar em campanha longa, testar:
 
-Esta é uma atualização substancial, mas não é correto chamar o multiplayer de versão final:
-- A sala continua limitada a 2 jogadores.
-- A autoridade do mundo cooperativo fica no anfitrião; se ele fechar o jogo, a sessão termina.
-- Progresso narrativo, diálogos, escolhas, equipamentos e saves individuais ainda não são compartilhados como um único save cooperativo.
-- A coleta de itens do cenário é sincronizada, mas baús, NPCs, interações e todas as recompensas de missão ainda precisam de sincronização própria.
-- O PvP usa detecção simplificada de golpes por alcance/direção; ainda não reproduz todas as hitboxes, defesas, habilidades e regras de duelo do combate solo.
-- A reconexão automática ao meio de uma partida e a recuperação de sessão após queda de internet ainda não estão implementadas.
-- O servidor não persiste salas ou partidas após reiniciar.
+1. Ambos entram na mesma área e arena.
+2. O chefe aparece com o mesmo identificador e HP nos dois clientes.
+3. Ataque do host e do convidado atualiza a mesma barra de vida.
+4. Fases, direção, telegráficos, ataques especiais e projéteis acompanham o host.
+5. A morte e a abertura da saída aparecem nos dois clientes.
+6. A progressão local do convidado é salva sem duplicar recompensas.
+7. Morte/respawn de um jogador durante a luta.
+8. Inimigos comuns e coleta continuam funcionando.
+9. PvP permanece funcional.
+10. Tentativa de entrar em sala com partida em andamento é recusada.
 
-## Teste recomendado
+## Limitações conhecidas
 
-Antes de jogar uma campanha longa:
-1. Teste com dois celulares em Wi-Fi.
-2. Crie uma sala cooperativa e confira se ambos veem o mesmo inimigo perder vida.
-3. Faça o convidado atacar e confirme que o inimigo morre para os dois.
-4. Deixe um jogador receber dano de um inimigo e confira a barra de vida.
-5. Teste coleta de moedas/itens e reanimação.
-6. Depois teste o PvP em uma área segura.
-
-Se algum dos dois aparelhos estiver usando um HTML antigo, o comportamento pode parecer dessincronizado.
+- A autoridade permanece no anfitrião. Se ele desconectar, a sessão não migra para o convidado.
+- Reconexão automática com recuperação completa do estado da batalha não foi implementada.
+- O convidado não pode entrar no meio de uma partida; deve entrar antes do anfitrião iniciar.
+- Não foi possível validar visualmente a experiência em dois aparelhos nesta execução.
+- O servidor aplica validação e limites básicos, mas a arquitetura ainda é parcialmente autoritativa: não é uma solução anti-cheat completa.
