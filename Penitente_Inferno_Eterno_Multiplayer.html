@@ -8573,6 +8573,8 @@ function newRun(idx,o={}){
   st.coins.forEach((c,i)=>{if(i%2===0&&keep(c.x))R.PK.push({k:'coin',x:c.x,y:c.y,vx:0,vy:0,v:1,st:true,t:rand(0,6)})});
   R.cam=clamp(R.P.x-W/2,0,st.length-W);
   if(o.arena)arenaInit();
+  /* IDs estáveis permitem sincronizar os mesmos inimigos nos dois aparelhos. */
+  if(typeof MP!=='undefined'){MP.nextEnemyId=1;MP.nextPickupId=1;for(const e of R.E)if(!e.netId)e.netId=MP.nextEnemyId++}
   Aud.mode='game';
   return R;
 }
@@ -8584,7 +8586,7 @@ function mkEnemy(type,x,o={}){
     guard:false,shield:0,shieldT:0,burn:0,burnT:0,weak:false,hover:0,pose:0,rise:o.rise||0,fly:!!T.fly,xpv:T.xp*(R.arena?1:gameDiff().xp),onGround:true,
     pull:null,vuln:0,airT:0,w:T.w*(elite?1.12:1),h:T.h*(elite?1.12:1),nova:rand(3.5,6),tel:null,boss,bs:'idle',bt:1.5,phase:1,hitDone:false};
 }
-function spawnEnemy(type,x,o={}){const e=mkEnemy(type,x,Object.assign({active:true,rise:.7},o));R.E.push(e);part(x,GY-4,0,-30,.6,3,'#ff6a1f',{add:1});return e}
+function spawnEnemy(type,x,o={}){const e=mkEnemy(type,x,Object.assign({active:true,rise:.7},o));if(typeof MP!=='undefined')e.netId=MP.nextEnemyId++;R.E.push(e);part(x,GY-4,0,-30,.6,3,'#ff6a1f',{add:1});return e}
 
 /* ---------- efeitos ---------- */
 function part(x,y,vx,vy,life,s,col,o={}){
@@ -8677,17 +8679,17 @@ function hurtPlayer(dmg,fromX,o={}){
     return false;
   }
   if(P.inv>0)return false;
-  dmg=Math.max(1,dmg*(1-S.dr));
+  dmg=Math.max(1,dmg*(o.ignoreDefense?1:1-S.dr));
   if(P.rage>0&&skSyn(S,2))dmg=Math.max(1,dmg*.8);
-  P.hp-=dmg;R.stats.dmgTaken+=dmg;R.stats.combo=0;R.stats.comboT=0;
+  P.hp-=dmg;if(MP&&MP.simRemote)MP.remoteDamagePending+=dmg;R.stats.dmgTaken+=dmg;R.stats.combo=0;R.stats.comboT=0;
   if(R.bossStarted&&!R.bossKilled)R.stats.bossDmg+=dmg;
-  if(o.dot){P.inv=.5;P.flashT=.1;txt(P.x,P.y-46,'-'+Math.round(dmg),'#8fe04a',.9);burst(P.x,P.y-22,6,50,['#8fe04a','#c8ff80'],{life:.6});Aud.play('hurt');if(P.hp<=0)killPlayer();return true}
+  if(o.dot){P.inv=.5;P.flashT=.1;txt(P.x,P.y-46,'-'+Math.round(dmg),'#8fe04a',.9);burst(P.x,P.y-22,6,50,['#8fe04a','#c8ff80'],{life:.6});Aud.play('hurt');if(P.hp<=0){if(MP&&MP.simRemote){P.hp=1}else killPlayer()}return true}
   P.inv=.8;P.hurtT=o.heavy?.4:.24;P.flashT=.14;P.act=null;P.rooted=Math.max(0,P.rooted-.3);
   P.vx=sgn(P.x-fromX)*(o.heavy?210:120)*(o.kb||1);P.vy=P.onGround?-90:P.vy;
   txt(P.x,P.y-46,'-'+Math.round(dmg),'#ff5040',1.1);burst(P.x,P.y-22,10,90,['#ff6a40','#ffb090','#fff'],{life:.7});
   shake(o.heavy?4:2.2);flashScr('200,20,10',.28);R.hitstop=Math.max(R.hitstop,.05);Aud.play('hurt');
   addFury(2+Math.min(4,dmg/S.maxHp*24));
-  if(P.hp<=0)killPlayer();
+  if(P.hp<=0){if(MP&&MP.simRemote){P.hp=1}else killPlayer()}
   return true;
 }
 function killPlayer(){
@@ -8710,6 +8712,12 @@ function respawn(){
 
 /* ---------- dano aos inimigos ---------- */
 function hitEnemy(e,base,o={}){
+  /* O convidado pede ao anfitrião para aplicar o dano; o anfitrião é a autoridade dos inimigos. */
+  if(typeof MP!=='undefined'&&MP.mode==='coop'&&MP.role==='guest'&&MP.socket&&MP.connected&&!MP.remoteApplying&&e&&e.netId){
+    const safe={};for(const k of ['src','kx','ky','stun','quiet','fromX','noKb','heavy','dot','finisher'])if(o[k]!==undefined&&['string','number','boolean'].includes(typeof o[k]))safe[k]=o[k];
+    MP.socket.emit('combat-hit',{code:MP.room,enemyId:e.netId,base:Number(base)||0,options:safe,fromX:R&&R.P?R.P.x:0});
+    return 0;
+  }
   if(e.dead||e.rise>0||e.invuln>0)return 0;
   const T=ET[e.type],P=R.P,S=R.S,melee=o.src==='sword'||o.src==='heavy'||o.src==='counter';
   if(e.type==='assassin'&&e.st==='hide'&&o.src!=='fire')return 0;
@@ -11275,6 +11283,7 @@ function updPickups(dt){
     if(k.mag&&!P.dead){k.x+=dx/d*300*dt;k.y+=dy/d*300*dt}
     if(!P.dead&&d<13){
       k.dead=true;
+      if(MP.socket&&MP.connected&&MP.mode==='coop'&&MP.role==='guest'&&k.netId)MP.socket.emit('pickup-collected',{code:MP.room,pickupId:k.netId});
       if(k.k==='coin'){gainCoin(k.v);addScore(3);if(R.t-(R.coinSnd||0)>.05){Aud.play('coin');R.coinSnd=R.t}part(k.x,k.y,rand(-20,20),-rand(10,40),.3,2,'#ffb070',{add:1})}
       else if(k.k==='soul'){const g=gainSouls(k.v*.6,1);if(g>0)txt(P.x,P.y-50,'+'+g+(g>1?' almas':' alma'),'#9fe8ff',.9);burst(P.x,P.y-20,8,60,['#9fe8ff','#fff'],{add:1});Aud.play('coin')}
       else if(k.k==='hp'){P.hp=Math.min(R.S.maxHp,P.hp+k.v);txt(P.x,P.y-50,'+'+Math.round(k.v),'#8fd16a',1);burst(P.x,P.y-20,10,60,['#8fd16a','#fff'],{add:1});Aud.play('coin')}
@@ -12654,6 +12663,7 @@ function renderWorld(){
   }
   c.globalAlpha=1;
   c.restore();
+  mpDrawTeamHUD(c);
 }
 const hexRGB=h=>{h=h.replace('#','');return parseInt(h.slice(0,2),16)+','+parseInt(h.slice(2,4),16)+','+parseInt(h.slice(4,6),16)};
 function lightPass(c,lights,amb){
@@ -14123,7 +14133,9 @@ function arEnd(win){
 /* ---------------- multiplayer online: salas e presença ---------------- */
 const MP={
   socket:null,connected:false,room:'',role:'',mode:'coop',name:'Penitente',
-  remote:null,lastSend:0,server:'',status:'Desconectado'
+  remote:null,lastSend:0,lastWorld:0,server:'',status:'Desconectado',
+  nextEnemyId:1,nextPickupId:1,worldSeq:0,attackSeq:0,lastAct:'',lastRemoteAttack:0,
+  remoteApplying:false,simRemote:false,remoteDamagePending:0,reviveT:0,lastPvpHit:0,worldReady:false
 };
 function mpHTML(){
   return `<div class="modal mp-lobby">
@@ -14147,7 +14159,7 @@ function mpHTML(){
     <button class="btn" data-act="mp-join" ${MP.connected?'':'disabled'}>Entrar na sala</button>
     <div class="mp-status">Sala: <b id="mp-room-label">${MP.room?esc(MP.room):'nenhuma'}</b> · <span id="mp-room-count">0/2 jogadores</span></div>
     <button class="btn hot" data-act="mp-start" ${MP.connected&&MP.room&&MP.role==='host'?'':'disabled'}>Iniciar partida</button>
-    <p class="tiny muted">Protótipo online: nesta etapa os personagens aparecem sincronizados no cenário. A sincronização completa do combate será integrada depois.</p>
+    <p class="tiny muted">Cooperativo: mundo e inimigos sincronizados pelo anfitrião; golpes do convidado são enviados ao anfitrião. PvP: golpes básicos entre jogadores. Reanimação cooperativa: ataque perto do parceiro caído. Protótipo avançado: teste antes de jogar a campanha inteira.</p>
     <button class="btn" data-act="close">Voltar</button>
   </div>`;
 }
@@ -14179,13 +14191,18 @@ function mpConnect(){
   sock.on('connect_error',e=>{MP.connected=false;mpSetStatus('Falha ao conectar: '+(e.message||'erro de rede'),'bad');mpRefresh()});
   sock.on('disconnect',()=>{MP.connected=false;MP.remote=null;mpSetStatus('Conexão perdida. Tentando reconectar…','bad');mpRefresh()});
   sock.on('room-update',d=>{MP.room=d.code||MP.room;MP.remote=d.players>1;MP.role=d.host===sock.id?'host':(d.host?'guest':MP.role);mpRefresh();});
-  sock.on('player-state',d=>{if(d&&d.id!==sock.id)MP.remote=d.state||null});
-  sock.on('player-left',()=>{MP.remote=null;mpRefresh();toast('Seu parceiro saiu da sala')});
+  sock.on('player-state',d=>{if(d&&d.id!==sock.id){MP.remote=d.state||null;mpCheckPartner()}});
+  sock.on('world-state',d=>{if(MP.role==='guest')mpApplyWorld(d)});
+  sock.on('combat-hit',d=>{if(MP.role==='host')mpApplyRemoteHit(d)});
+  sock.on('pickup-collected',d=>{if(MP.role==='host')mpApplyRemotePickup(d)});
+  sock.on('player-damage',d=>{if(MP.role==='guest'&&R&&scene==='play'&&d)hurtPlayer(clamp(+d.damage||0,0,R.S.maxHp*.5),+d.fromX||R.P.x-1,{heavy:!!d.heavy,ignoreDefense:true})});
+  sock.on('player-left',()=>{MP.remote=null;MP.worldReady=false;mpRefresh();toast('Seu parceiro saiu da sala')});
   sock.on('match-start',d=>{
-    MP.mode=d.mode||MP.mode;MP.room=d.code||MP.room;
+    MP.mode=d.mode||MP.mode;MP.room=d.code||MP.room;MP.appliedSeq=0;MP.worldReady=true;MP.reviveT=0;
     closeModal();const idx=clamp(+d.area||0,0,STAGES.length-1),cpx=Math.max(0,+d.cpx||0);
     startArea(idx,{cpx,fresh:true});
     if(MP.role==='guest'&&R&&R.P)R.P.x+=76;
+    if(R&&R.P){R.P.hp=R.S.maxHp;R.P.dead=false;R.state='play'}
     toast(MP.mode==='pvp'?'Duelo online iniciado':'Cooperativo online iniciado');
   });
   sock.on('room-error',d=>{mpSetStatus(d.message||'Não foi possível entrar na sala.','bad');});
@@ -14224,15 +14241,151 @@ function mpDisconnect(){
   MP.socket=null;MP.connected=false;MP.room='';MP.role='';MP.remote=null;
   mpSetStatus('Desconectado.');mpRefresh();
 }
+
+/* ---------------- multiplayer: mundo compartilhado ---------------- */
+function mpSafeCopy(v,depth=0,seen=new WeakSet()){
+  if(v===null||typeof v==='string'||typeof v==='number'||typeof v==='boolean')return v;
+  if(typeof v!=='object'||depth>5)return undefined;
+  if(seen.has(v))return undefined;seen.add(v);
+  if(Array.isArray(v))return v.slice(0,500).map(x=>mpSafeCopy(x,depth+1,seen)).filter(x=>x!==undefined);
+  if(v instanceof Set)return [];
+  const out={};
+  for(const k of Object.keys(v)){
+    if(['owner','tgt','shielder','set','socket','_listeners'].includes(k))continue;
+    const x=mpSafeCopy(v[k],depth+1,seen);if(x!==undefined)out[k]=x;
+  }
+  return out;
+}
+function mpWorldSnapshot(){
+  if(!R)return null;
+  for(const k of R.PK)if(!k.netId)k.netId=MP.nextPickupId++;
+  return {seq:++MP.worldSeq,area:R.idx,sec:R.sec,state:R.state,t:R.t,
+    enemies:R.E.map(e=>mpSafeCopy(e)).filter(Boolean),
+    projectiles:R.PR.map(p=>mpSafeCopy(p)).filter(Boolean),
+    pickups:R.PK.map(p=>mpSafeCopy(p)).filter(Boolean),
+    hazards:mpSafeCopy(R.hz||[]),pits:mpSafeCopy(R.st.pits||[]),
+    plats:mpSafeCopy(R.st.plats||[]),solids:mpSafeCopy(R.solids||[]),
+    vzG:mpSafeCopy(R.vzG||[]),bossStarted:!!R.bossStarted,bossKilled:!!R.bossKilled,
+    exitOpen:!!R.exitOpen,cp:mpSafeCopy(R.cp),stats:{kills:R.stats.kills,bossDmg:R.stats.bossDmg}};
+}
+function mpApplyWorld(w){
+  if(!w||!R||MP.role!=='guest'||w.area!==R.idx||!Array.isArray(w.enemies))return;
+  if(w.seq<=(MP.appliedSeq||0))return;MP.appliedSeq=w.seq;
+  const next=[];
+  for(const d of w.enemies){
+    if(!d||!d.type||!Number.isFinite(+d.x))continue;
+    let e=R.E.find(q=>q.netId===d.netId);
+    if(!e)e=mkEnemy(d.type,+d.x,{active:true});
+    Object.assign(e,d);next.push(e);
+  }
+  R.E=next;
+  R.boss=R.E.find(e=>e.boss&&!e.dead)||R.E.find(e=>e.boss)||null;
+  R.PR=Array.isArray(w.projectiles)?w.projectiles:[];
+  R.PK=Array.isArray(w.pickups)?w.pickups:[];
+  if(Array.isArray(w.hazards))R.hz=w.hazards;
+  if(Array.isArray(w.pits))R.st.pits=w.pits;
+  if(Array.isArray(w.plats))R.st.plats=w.plats;
+  if(Array.isArray(w.solids))R.solids=w.solids;
+  if(Array.isArray(w.vzG))R.vzG=w.vzG;
+  R.bossStarted=!!w.bossStarted;R.bossKilled=!!w.bossKilled;R.exitOpen=!!w.exitOpen;
+  if(w.cp&&Number.isFinite(+w.cp.x))R.cp={x:+w.cp.x};
+}
+
+function mpApplyRemotePickup(d){
+  if(!d||MP.role!=='host'||MP.mode!=='coop'||!R||scene!=='play')return;
+  const k=R.PK.find(q=>q.netId===d.pickupId);if(!k||k.dead)return;
+  k.dead=true;
+  if(k.k==='coin'){gainCoin(k.v);addScore(3)}
+  else if(k.k==='soul'){gainSouls(k.v*.6,1)}
+  else if(k.k==='hp')R.P.hp=Math.min(R.S.maxHp,R.P.hp+k.v);
+  else R.P.en=Math.min(R.S.maxEn,R.P.en+k.v);
+  R.PK=R.PK.filter(q=>!q.dead);
+}
+
+function mpApplyRemoteHit(d){
+  if(!d||MP.role!=='host'||MP.mode!=='coop'||!R||scene!=='play')return;
+  const e=R.E.find(q=>q.netId===d.enemyId);if(!e||e.dead)return;
+  MP.remoteApplying=true;
+  try{hitEnemy(e,clamp(+d.base||0,0,100000),Object.assign({},d.options||{},{fromX:Number.isFinite(+d.fromX)?+d.fromX:(d.options||{}).fromX}))}
+  finally{MP.remoteApplying=false}
+}
+
+function mpUpdateEnemyForRemote(e,dt){
+  const Q=MP.remote,local=R.P;
+  if(!Q||Q.dead||!Number.isFinite(+Q.x)){updEnemy(e,dt);return}
+  const proxy=Object.assign({},local,{
+    x:+Q.x,y:Number.isFinite(+Q.y)?+Q.y:GY,f:Q.f||1,
+    hp:Math.max(1,+Q.hp||1),dead:false,inv:Math.max(0,+Q.inv||0),
+    dinv:Q.dodge?Math.max(.05,+Q.dinv||.12):Math.max(0,+Q.dinv||0),
+    onGround:Q.air===0,vy:Q.air<0?-80:Q.air>0?80:0,
+    rage:Q.rage?1:0,hurtT:Q.hurt?.2:0,w:12,h:38
+  });
+  MP.remoteDamagePending=0;MP.simRemote=true;R.P=proxy;
+  try{updEnemy(e,dt)}
+  finally{R.P=local;MP.simRemote=false}
+  const damage=MP.remoteDamagePending;MP.remoteDamagePending=0;
+  if(damage>0&&MP.socket&&MP.connected){
+    MP.socket.emit('player-damage',{code:MP.room,damage,fromX:e.x,heavy:true,ignoreDefense:true});
+  }
+}
+
+function mpReviveLocal(){
+  if(!R||!R.P||!R.P.dead)return;
+  const P=R.P;P.dead=false;P.hp=Math.max(1,R.S.maxHp*.35);P.en=Math.max(P.en||0,R.S.maxEn*.25);
+  P.x=clamp(P.x,0,R.st.length);P.y=GY;P.vx=P.vy=0;P.act=null;P.inv=2;P.dinv=0;P.hurtT=0;P.rooted=0;P.dash=null;P.pullTo=null;
+  R.state='play';R.deadT=0;R.defeatShown=false;R.ts=1;MP.reviveT=0;
+  txt(P.x,P.y-58,'RESSUSCITADO','#9fe8ff',1.2,1.4);ring(P.x,P.y-20,44,'100,220,255',.6,3);Aud.play('level');
+}
+function mpCheckPartner(){
+  if(!MP.socket||!MP.remote||!R||!R.P||scene!=='play')return;
+  const P=R.P,Q=MP.remote;
+  if(MP.mode==='coop'&&P.dead&&Q.revive&&Math.hypot((Q.x||0)-P.x,(Q.y||GY)-P.y)<92){
+    MP.reviveT+=1/60;if(MP.reviveT>=1.35)mpReviveLocal();
+  }else MP.reviveT=0;
+  if(MP.mode==='pvp'&&Q.atkSeq&&Q.atkSeq!==MP.lastRemoteAttack){
+    MP.lastRemoteAttack=Q.atkSeq;
+    const dx=P.x-(+Q.x||0),dy=(P.y-20)-((+Q.y||GY)-20);
+    const facing=(dx===0?true:Math.sign(dx)===(Q.f||1));
+    if(Math.hypot(dx,dy)<74&&facing&&performance.now()-MP.lastPvpHit>350){
+      MP.lastPvpHit=performance.now();hurtPlayer(clamp(+Q.atkDamage||R.S.maxHp*.085,4,R.S.maxHp*.22),+Q.x||P.x-1,{kb:.65});
+      toast('Você recebeu um golpe do adversário');
+    }
+  }
+}
+function mpDrawTeamHUD(c){
+  if(!MP.socket||!MP.remote||!R||scene!=='play')return;
+  const Q=MP.remote, hp=clamp((+Q.hp||0)/Math.max(1,+Q.maxHp||1),0,1);
+  c.save();c.globalAlpha=.95;
+  c.fillStyle='#090504d9';c.fillRect(12,12,154,27);
+  c.strokeStyle=MP.mode==='pvp'?'#c44':'#65cde8';c.strokeRect(12.5,12.5,153,26);
+  c.fillStyle='#d8c8ad';c.font='12px Arial';c.textAlign='left';c.fillText((Q.name||'Parceiro').slice(0,16),18,22);
+  c.fillStyle='#24110e';c.fillRect(18,27,140,6);c.fillStyle=MP.mode==='pvp'?'#d54a38':'#58c8e8';c.fillRect(18,27,140*hp,6);
+  if(Q.dead)c.fillText('CAÍDO — ataque perto para reanimar',174,23);
+  c.restore();
+}
+
 function mpSendState(){
   if(!MP.socket||!MP.connected||!MP.room||scene!=='play'||!R||R.paused)return;
-  const now=performance.now();if(now-MP.lastSend<75)return;MP.lastSend=now;
+  const now=performance.now();if(now-MP.lastSend<90)return;MP.lastSend=now;
   const p=R.P;
-  MP.socket.emit('player-state',{code:MP.room,state:{
+  const act=p.act&&p.act.k||'';
+  const attackAct=['quick','heavy','chain','fire','rageslam'].includes(act);
+  if(attackAct&&act!==MP.lastAct)MP.attackSeq++;
+  MP.lastAct=attackAct?act:'';
+  const state={
     x:Math.round(p.x),y:Math.round(p.y),f:p.f||1,run:Math.abs(p.vx||0)>25,
-    air:p.grounded?0:(p.vy<0?-1:1),dodge:!!p.dodgeT,hurt:!!p.hitT,
-    rage:!!p.rage,mode:MP.mode,name:MP.name
-  }});
+    air:p.onGround?0:(p.vy<0?-1:1),dodge:!!p.dinv,hurt:!!p.hurtT,
+    rage:!!p.rage,mode:MP.mode,name:MP.name,
+    hp:Math.max(0,Math.round(p.hp||0)),maxHp:Math.max(1,Math.round(R.S.maxHp||1)),
+    dead:!!p.dead,inv:Math.max(0,p.inv||0),dinv:Math.max(0,p.dinv||0),
+    atkSeq:MP.attackSeq,act,
+    atkDamage:act==='heavy'?R.S.maxHp*.12:act==='rageslam'?R.S.maxHp*.18:act==='fire'?R.S.maxHp*.1:R.S.maxHp*.075,
+    revive:!!(MP.mode==='coop'&&!p.dead&&(Input.down.attack||Input.down.heavy||Input.down.chain)&&MP.remote&&MP.remote.dead&&Math.hypot((MP.remote.x||0)-p.x,(MP.remote.y||GY)-p.y)<92)
+  };
+  MP.socket.emit('player-state',{code:MP.room,state});
+  if(MP.role==='host'&&MP.mode==='coop'&&now-MP.lastWorld>110){
+    MP.lastWorld=now;const world=mpWorldSnapshot();if(world)MP.socket.emit('world-state',{code:MP.room,world});
+  }
 }
 
 /* ---------------- delegação de eventos ---------------- */
@@ -14359,17 +14512,24 @@ function update(dt){
   if(state==='play'){
     s.time+=sdt;
     updPlayer(sdt);
-    for(const e of R.E)updEnemy(e,sdt);
-    if(R.arena)updArena(sdt);
+    if(!(MP.socket&&MP.connected&&MP.mode==='coop'&&MP.role==='guest')){
+      for(const e of R.E){
+        const Q=MP.remote,remoteNear=MP.socket&&MP.connected&&MP.mode==='coop'&&MP.role==='host'&&Q&&!Q.dead&&Number.isFinite(+Q.x)&&Math.abs((+Q.x)-e.x)<Math.abs(R.P.x-e.x);
+        if(remoteNear)mpUpdateEnemyForRemote(e,sdt);else updEnemy(e,sdt);
+      }
+    }
+    if(R.arena&&!(MP.socket&&MP.connected&&MP.mode==='coop'&&MP.role==='guest'))updArena(sdt);
     bestWatch();mapTrack();
-    separate();updProj(sdt);updHazards(sdt);updPickups(sdt);updWorld(sdt);
+    if(!(MP.socket&&MP.connected&&MP.mode==='coop'&&MP.role==='guest')){separate();updWorld(sdt)}
+    updProj(sdt);updHazards(sdt);updPickups(sdt);
     R.E=R.E.filter(e=>!(e.dead&&e.deadT>(e.type==='soldier'?1.4:e.type==='archer'?1.2:(e.type==='runner'&&e.skin!=='wolf')?1.35:e.type==='brute'?1.6:e.type==='assassin'?1.2:e.type==='priest'?1.4:e.type==='devourer'?1.4:e.type==='hunter'?1.4:e.type==='lantern'?1.5:e.type==='woodcutter'?1.5:e.type==='pastor'?1.3:e.type==='ottilia'?1.6:e.type==='scribe'||e.type==='carpideira'?1.45:e.type==='censor'?1.55:e.type==='eco'?1.25:e.type==='apagado'?1.35:e.type==='sentinela'?1.55:1)&&!e.boss));
     if(s.comboT>0){s.comboT-=sdt;if(s.comboT<=0)s.combo=0}
   }else if(state==='cine'){
     updEnemy(R.boss,sdt);updCine(sdt);updPickups(sdt);
   }else if(state==='dead'){
     updPlayer(sdt);updPickups(sdt);R.deadT+=dt;
-    if(R.deadT>1.6&&!R.defeatShown)showDefeat();
+    if(MP.socket&&MP.connected&&MP.mode==='coop'){mpCheckPartner();if(R.deadT>22&&!R.defeatShown)showDefeat()}
+    else if(R.deadT>1.6&&!R.defeatShown)showDefeat();
   }else if(state==='bossdie'){
     updBossDeath(sdt);updPickups(sdt);
   }else if(state==='talk'){

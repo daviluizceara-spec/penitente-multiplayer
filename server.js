@@ -4,117 +4,153 @@ const { Server } = require('socket.io');
 
 const PORT = Number(process.env.PORT || 3000);
 const server = http.createServer((req, res) => {
-  res.writeHead(200, { 'content-type': 'text/plain; charset=utf-8' });
-  res.end('Penitente: Inferno Eterno — servidor multiplayer online ativo.\\n');
+  res.writeHead(200, {'content-type':'text/plain; charset=utf-8','cache-control':'no-store'});
+  res.end('Penitente: Inferno Eterno — servidor multiplayer ativo.\\n');
 });
 const io = new Server(server, {
-  cors: { origin: '*', methods: ['GET', 'POST'] },
-  transports: ['websocket', 'polling'],
+  cors: { origin: '*', methods: ['GET','POST'] },
+  transports: ['websocket','polling'],
   pingInterval: 10000,
-  pingTimeout: 20000
+  pingTimeout: 20000,
+  maxHttpBufferSize: 2e6
 });
 
 const rooms = new Map();
 const socketRoom = new Map();
+const lastWorld = new Map();
+const lastHit = new Map();
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-
-function makeCode() {
+function makeCode(){
   let code;
-  do {
-    code = Array.from({ length: 6 }, () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join('');
-  } while (rooms.has(code));
+  do { code=Array.from({length:6},()=>CODE_CHARS[Math.floor(Math.random()*CODE_CHARS.length)]).join(''); }
+  while(rooms.has(code));
   return code;
 }
-function roomInfo(room) {
-  return { code: room.code, players: room.players.size, host: room.host, mode: room.mode };
+function cleanName(v){
+  return String(v||'Penitente').replace(/[<>\\u0000-\\u001f]/g,'').trim().slice(0,16)||'Penitente';
 }
-function updateRoom(room) {
-  io.to(room.code).emit('room-update', roomInfo(room));
+function roomInfo(r){return {code:r.code,players:r.players.size,host:r.host,mode:r.mode};}
+function updateRoom(r){io.to(r.code).emit('room-update',roomInfo(r));}
+function leaveRoom(socket){
+  const code=socketRoom.get(socket.id);if(!code)return;
+  const r=rooms.get(code);socketRoom.delete(socket.id);socket.leave(code);
+  lastWorld.delete(socket.id);lastHit.delete(socket.id);
+  if(!r)return;
+  r.players.delete(socket.id);io.to(code).emit('player-left');
+  if(!r.players.size){rooms.delete(code);return;}
+  if(r.host===socket.id)r.host=r.players.keys().next().value;
+  updateRoom(r);
 }
-function leaveRoom(socket) {
-  const code = socketRoom.get(socket.id);
-  if (!code) return;
-  const room = rooms.get(code);
-  socketRoom.delete(socket.id);
-  socket.leave(code);
-  if (!room) return;
-  room.players.delete(socket.id);
-  io.to(code).emit('player-left');
-  if (room.players.size === 0) {
-    rooms.delete(code);
-    return;
-  }
-  if (room.host === socket.id) room.host = room.players.keys().next().value;
-  updateRoom(room);
+function num(v,min,max,fallback=0){v=Number(v);return Number.isFinite(v)?Math.max(min,Math.min(max,v)):fallback;}
+function cleanPlayerState(s={}){
+  return {
+    x:num(s.x,-100000,1000000),y:num(s.y,-1000,2000),f:Number(s.f)<0?-1:1,
+    run:!!s.run,air:num(s.air,-1,1),dodge:!!s.dodge,hurt:!!s.hurt,rage:!!s.rage,
+    name:cleanName(s.name),hp:num(s.hp,0,100000),maxHp:num(s.maxHp,1,100000,1),
+    dead:!!s.dead,inv:num(s.inv,0,10),dinv:num(s.dinv,0,10),
+    atkSeq:num(s.atkSeq,0,1e9),act:String(s.act||'').slice(0,24),
+    atkDamage:num(s.atkDamage,0,100000),revive:!!s.revive
+  };
 }
-function cleanName(value) {
-  return String(value || 'Penitente').replace(/[<>\\u0000-\\u001f]/g, '').trim().slice(0, 16) || 'Penitente';
-}
-
-io.on('connection', socket => {
-  socket.on('create-room', (data = {}, ack = () => {}) => {
-    leaveRoom(socket);
-    const code = makeCode();
-    const room = {
-      code,
-      host: socket.id,
-      mode: data.mode === 'pvp' ? 'pvp' : 'coop',
-      players: new Map([[socket.id, { name: cleanName(data.name) }]])
+function cleanWorld(w){
+  if(!w||typeof w!=='object')return null;
+  const arr=(v,n)=>Array.isArray(v)?v.slice(0,n):[];
+  let clean;
+  try{
+    clean={
+      seq:num(w.seq,0,1e12),area:num(w.area,0,5),sec:num(w.sec,-1,100),
+      state:String(w.state||'play').slice(0,16),t:num(w.t,0,1e9),
+      enemies:arr(w.enemies,180),projectiles:arr(w.projectiles,220),pickups:arr(w.pickups,220),
+      hazards:arr(w.hazards,120),pits:arr(w.pits,120),plats:arr(w.plats,120),
+      solids:arr(w.solids,240),vzG:arr(w.vzG,80),
+      bossStarted:!!w.bossStarted,bossKilled:!!w.bossKilled,exitOpen:!!w.exitOpen,
+      cp:w.cp&&typeof w.cp==='object'?{x:num(w.cp.x,0,1000000)}:null,
+      stats:w.stats&&typeof w.stats==='object'?{kills:num(w.stats.kills,0,1e9),bossDmg:num(w.stats.bossDmg,0,1e9)}:{}
     };
-    rooms.set(code, room);
-    socket.join(code);
-    socketRoom.set(socket.id, code);
-    ack({ ok: true, code, mode: room.mode });
-    updateRoom(room);
-  });
-
-  socket.on('join-room', (data = {}, ack = () => {}) => {
-    const code = String(data.code || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
-    const room = rooms.get(code);
-    if (!room) return ack({ ok: false, error: 'Sala não encontrada. Confira o código.' });
-    if (room.players.size >= 2) return ack({ ok: false, error: 'A sala já está cheia.' });
+    const raw=JSON.stringify(clean);
+    if(raw.length>1500000)return null;
+    // Re-parse to reject unsupported/cyclic values and strip prototypes.
+    clean=JSON.parse(raw);
+    return clean;
+  }catch(_){return null}
+}
+io.on('connection',socket=>{
+  socket.on('create-room',(data={},ack=()=>{})=>{
     leaveRoom(socket);
-    room.players.set(socket.id, { name: cleanName(data.name) });
-    socket.join(code);
-    socketRoom.set(socket.id, code);
-    ack({ ok: true, code, mode: room.mode });
-    updateRoom(room);
+    const code=makeCode(),room={code,host:socket.id,mode:data.mode==='pvp'?'pvp':'coop',
+      players:new Map([[socket.id,{name:cleanName(data.name)}]])};
+    rooms.set(code,room);socket.join(code);socketRoom.set(socket.id,code);
+    ack({ok:true,code,mode:room.mode});updateRoom(room);
   });
-
-  socket.on('start-match', (data = {}, ack = () => {}) => {
-    const code = String(data.code || '');
-    const room = rooms.get(code);
-    if (!room || socketRoom.get(socket.id) !== code) return ack({ ok: false, error: 'Você não está nessa sala.' });
-    if (room.host !== socket.id) return ack({ ok: false, error: 'Somente o criador da sala pode iniciar.' });
-    if (room.players.size !== 2) return ack({ ok: false, error: 'Espere seu amigo entrar na sala.' });
-    room.mode = data.mode === 'pvp' ? 'pvp' : 'coop';
-    const area = Math.max(0, Math.min(5, Math.floor(Number(data.area) || 0)));
-    const cpx = Math.max(0, Math.min(1000000, Number(data.cpx) || 0));
-    io.to(code).emit('match-start', { code, mode: room.mode, area, cpx });
-    ack({ ok: true });
+  socket.on('join-room',(data={},ack=()=>{})=>{
+    const code=String(data.code||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6);
+    const room=rooms.get(code);
+    if(!room)return ack({ok:false,error:'Sala não encontrada. Confira o código.'});
+    if(room.players.size>=2)return ack({ok:false,error:'A sala já está cheia.'});
+    leaveRoom(socket);
+    room.players.set(socket.id,{name:cleanName(data.name)});
+    socket.join(code);socketRoom.set(socket.id,code);
+    ack({ok:true,code,mode:room.mode});updateRoom(room);
   });
-
-  socket.on('player-state', (data = {}) => {
-    const code = String(data.code || '');
-    if (socketRoom.get(socket.id) !== code || !rooms.has(code)) return;
-    const s = data.state || {};
-    const state = {
-      x: Math.max(-100000, Math.min(1000000, Number(s.x) || 0)),
-      y: Math.max(-1000, Math.min(2000, Number(s.y) || 0)),
-      f: Number(s.f) < 0 ? -1 : 1,
-      run: !!s.run,
-      air: Math.max(-1, Math.min(1, Number(s.air) || 0)),
-      dodge: !!s.dodge,
-      hurt: !!s.hurt,
-      rage: !!s.rage,
-      name: cleanName(s.name)
-    };
-    socket.to(code).volatile.emit('player-state', { id: socket.id, state });
+  socket.on('start-match',(data={},ack=()=>{})=>{
+    const code=String(data.code||''),room=rooms.get(code);
+    if(!room||socketRoom.get(socket.id)!==code)return ack({ok:false,error:'Você não está nessa sala.'});
+    if(room.host!==socket.id)return ack({ok:false,error:'Somente o criador pode iniciar.'});
+    if(room.players.size!==2)return ack({ok:false,error:'Espere seu amigo entrar na sala.'});
+    room.mode=data.mode==='pvp'?'pvp':'coop';
+    const area=Math.floor(num(data.area,0,5)),cpx=num(data.cpx,0,1000000);
+    room.started=true;room.mode=room.mode;
+    io.to(code).emit('match-start',{code,mode:room.mode,area,cpx});
+    ack({ok:true});
   });
-
-  socket.on('disconnect', () => leaveRoom(socket));
+  socket.on('player-state',(data={})=>{
+    const code=String(data.code||''),room=rooms.get(code);
+    if(!room||socketRoom.get(socket.id)!==code)return;
+    const state=cleanPlayerState(data.state||{});
+    socket.to(code).volatile.emit('player-state',{id:socket.id,state});
+  });
+  // O anfitrião é a autoridade do mundo compartilhado no modo cooperativo.
+  socket.on('world-state',(data={})=>{
+    const code=String(data.code||''),room=rooms.get(code);
+    if(!room||socketRoom.get(socket.id)!==code||room.host!==socket.id||room.mode!=='coop'||!room.started)return;
+    const now=Date.now(),last=lastWorld.get(socket.id)||0;
+    if(now-last<65)return;
+    lastWorld.set(socket.id,now);
+    const world=cleanWorld(data.world);if(!world)return;
+    socket.to(code).emit('world-state',world);
+  });
+  // Golpes do convidado são encaminhados ao anfitrião para aplicar no inimigo real.
+  socket.on('combat-hit',(data={})=>{
+    const code=String(data.code||''),room=rooms.get(code);
+    if(!room||socketRoom.get(socket.id)!==code||room.host===socket.id||room.mode!=='coop'||!room.started)return;
+    const now=Date.now(),last=lastHit.get(socket.id)||0;
+    if(now-last<35)return;
+    lastHit.set(socket.id,now);
+    const options={};
+    for(const k of ['src','kx','ky','stun','quiet','fromX','noKb','heavy','dot','finisher']){
+      const v=(data.options||{})[k];
+      if(['string','number','boolean'].includes(typeof v))options[k]=v;
+    }
+    io.to(room.host).emit('combat-hit',{
+      enemyId:num(data.enemyId,1,1e9),base:num(data.base,0,100000),
+      fromX:num(data.fromX,-100000,1000000),options
+    });
+  });
+  // Coleta de itens do convidado: remove o item do mundo compartilhado no anfitrião.
+  socket.on('pickup-collected',(data={})=>{
+    const code=String(data.code||''),room=rooms.get(code);
+    if(!room||socketRoom.get(socket.id)!==code||room.host===socket.id||room.mode!=='coop'||!room.started)return;
+    io.to(room.host).emit('pickup-collected',{pickupId:num(data.pickupId,1,1e9)});
+  });
+  // Dano calculado pelo anfitrião contra o personagem convidado.
+  socket.on('player-damage',(data={})=>{
+    const code=String(data.code||''),room=rooms.get(code);
+    if(!room||socketRoom.get(socket.id)!==code||room.host!==socket.id||room.mode!=='coop'||!room.started)return;
+    const damage=num(data.damage,0,100000);if(!damage)return;
+    io.to(code).except(socket.id).emit('player-damage',{
+      damage,fromX:num(data.fromX,-100000,1000000),heavy:!!data.heavy,ignoreDefense:true
+    });
+  });
+  socket.on('disconnect',()=>leaveRoom(socket));
 });
-
-server.listen(PORT, '0.0.0.0', () => {
-  console.log(`Penitente multiplayer server listening on ${PORT}`);
-});
+server.listen(PORT,'0.0.0.0',()=>console.log(`Penitente multiplayer listening on ${PORT}`));

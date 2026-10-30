@@ -1,8 +1,8 @@
 {
   "name": "penitente-inferno-eterno-multiplayer",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
-  "description": "Servidor de salas online para Penitente: Inferno Eterno",
+  "description": "Servidor multiplayer cooperativo e PvP para Penitente: Inferno Eterno",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
