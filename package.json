@@ -1,8 +1,8 @@
 {
   "name": "penitente-inferno-eterno-multiplayer",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
-  "description": "Servidor multiplayer cooperativo e PvP para Penitente: Inferno Eterno — V3 com estado autoritativo de chefes",
+  "description": "Servidor multiplayer cooperativo e PvP para Penitente: Inferno Eterno",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
