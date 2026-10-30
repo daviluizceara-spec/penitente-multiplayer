@@ -49,6 +49,7 @@ function cleanPlayerState(s={}){
     name:cleanName(s.name),hp:num(s.hp,0,100000),maxHp:num(s.maxHp,1,100000,1),
     dead:!!s.dead,inv:num(s.inv,0,10),dinv:num(s.dinv,0,10),
     atkSeq:num(s.atkSeq,0,1e9),act:String(s.act||'').slice(0,24),
+    atkP:num(s.atkP,0,1,0),atkN:Math.floor(num(s.atkN,1,3,1)),
     atkDamage:num(s.atkDamage,0,100000),revive:!!s.revive
   };
 }
@@ -124,14 +125,14 @@ io.on('connection',socket=>{
     const code=String(data.code||''),room=rooms.get(code);
     if(!room||socketRoom.get(socket.id)!==code)return;
     const state=cleanPlayerState(data.state||{});
-    socket.to(code).volatile.emit('player-state',{id:socket.id,state});
+    socket.to(code).emit('player-state',{id:socket.id,state});
   });
   // O anfitrião é a autoridade do mundo compartilhado no modo cooperativo.
   socket.on('world-state',(data={})=>{
     const code=String(data.code||''),room=rooms.get(code);
     if(!room||socketRoom.get(socket.id)!==code||room.host!==socket.id||room.mode!=='coop'||!room.started)return;
     const now=Date.now(),last=lastWorld.get(socket.id)||0;
-    if(now-last<65)return;
+    if(now-last<140)return;
     lastWorld.set(socket.id,now);
     const world=cleanWorld(data.world);if(!world)return;
     room.worldState=world;
