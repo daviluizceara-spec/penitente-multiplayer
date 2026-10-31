@@ -1,31 +1,17 @@
-# Penitente: Inferno Eterno — Multiplayer V5
+# Penitente: Inferno Eterno — Multiplayer V6
 
-Esta versão atualiza o HTML do jogo e o servidor Socket.IO. **Os dois precisam ser atualizados juntos.**
+**HTML e servidor precisam ser atualizados juntos** (os dois jogadores com o HTML V6).
 
-## Correções da V5
+## Correções da V6
 
-- Repasse da ação e da fase do golpe do jogador remoto para a animação do personagem.
-- Suavização da posição do parceiro para reduzir os saltos visuais.
-- Envio do estado dos jogadores em intervalo menor e sem descarte de pacotes de movimento.
-- Reanimação cooperativa: o jogador vivo deve ficar próximo do parceiro caído e manter um botão de ataque pressionado por aproximadamente 0,9 segundo. Funcionam golpe rápido, golpe pesado e arpão; no celular, mantenha pressionado um desses botões.
-- Redução da frequência dos snapshots do mundo compartilhado para diminuir o tráfego do servidor.
-
-## Arquivos
-
-- `Penitente_Inferno_Eterno_Multiplayer.html` — jogo atualizado.
-- `server.js` — servidor atualizado.
-- `package.json` — dependência e comando de inicialização.
+- **Nome do amigo**: o servidor tinha uma regex quebrada que apagava maiúsculas, números e as letras "u"/"f" ("Pedro" virava "edro"). Corrigida; o nome agora vem do cadastro da sala (não muda mais por pacote) e é relido ao criar/entrar.
+- **PvP não vai mais para a história**: duelo em arena própria, melhor de 3 rounds, placar controlado pelo servidor, revanche. Cooperativo continua sendo a campanha.
+- **Chefes sincronizados**: chefe dispara com qualquer jogador na arena; adds/invocações ganham ID (antes se confundiam); zonas, falas, escuridão e mini-chefes replicados; snapshots só com diferenças (~12/s) e suavização no convidado; mundo continua se o anfitrião morre; prender/puxar do chefe chega ao convidado; sem dano duplicado em projéteis do anfitrião; convidado recebe recompensa do chefe.
+- **Animações do parceiro**: cada golpe toca inteiro (mesmo em combos), com skin/arma do amigo, passada, esquiva, dano, morte, correntes, teia e projéteis.
+- **Servidor padrão** `https://penitente-multiplayer.onrender.com` já preenchido; o lobby conecta sozinho (campo em "Servidor (avançado)"). Nome salvo no aparelho.
 
 ## Atualização no GitHub / Render
+Substitua o HTML, `server.js` e `package.json`, faça commit e espere o Render ficar **Live**.
 
-1. Na raiz do repositório, substitua o HTML principal pelo HTML deste pacote.
-2. Substitua o `server.js` pelo `server.js` deste pacote.
-3. Mantenha o `package.json` atual (a dependência não mudou); se preferir, pode substituir pelo incluído.
-4. Faça commit e aguarde o deploy do Render ficar **Live**.
-5. Os dois jogadores devem abrir o HTML V5, não misturar V4 com V5.
-
-O comando de inicialização continua `npm start`.
-
-## Observação de teste
-
-A sintaxe do JavaScript do HTML e do servidor foi verificada. A partida real entre dois dispositivos ainda precisa ser testada com os dois jogadores conectados ao servidor atualizado.
+## Teste
+Sintaxe do HTML e do servidor verificada e o diff de snapshots testado isoladamente. **Partida real entre dois aparelhos ainda precisa ser testada.**
