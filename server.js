@@ -5,10 +5,11 @@ const { Server } = require('socket.io');
 const PORT = Number(process.env.PORT || 3000);
 const server = http.createServer((req, res) => {
   res.writeHead(200, {'content-type':'text/plain; charset=utf-8','cache-control':'no-store','access-control-allow-origin':'*'});
-  res.end('Penitente: Inferno Eterno — servidor multiplayer ativo.\n');
+  res.end('Penitente: Inferno Eterno — servidor V7 / R9.1 ativo.\n');
 });
 const io = new Server(server, {
   cors: { origin: '*', methods: ['GET','POST'] },
+  connectionStateRecovery: {maxDisconnectionDuration:120000,skipMiddlewares:false},
   transports: ['websocket','polling'],
   pingInterval: 10000,
   pingTimeout: 25000,
@@ -16,6 +17,8 @@ const io = new Server(server, {
 });
 
 const rooms = new Map();
+const pendingDisconnect = new Map();
+const RECOVERY_MS = 120000;
 const socketRoom = new Map();
 const lastWorld = new Map();
 const lastHit = new Map();
@@ -40,7 +43,7 @@ function namesOf(r){
   for(const [id,p] of r.players) out[id]=p.name;
   return out;
 }
-function roomInfo(r){return {code:r.code,players:r.players.size,host:r.host,mode:r.mode,started:!!r.started,names:namesOf(r)};}
+function roomInfo(r){return {code:r.code,players:[...r.players.values()].filter(p=>p.connected!==false).length,host:r.host,mode:r.mode,started:!!r.started,names:namesOf(r)};}
 function updateRoom(r){io.to(r.code).emit('room-update',roomInfo(r));}
 function clearTimers(r){
   if(!r||!r.timers)return;
@@ -52,7 +55,9 @@ function later(r,ms,fn){
   const t=setTimeout(()=>{r.timers=r.timers.filter(x=>x!==t);fn()},ms);
   r.timers.push(t);
 }
+function cancelDeparture(id){const timer=pendingDisconnect.get(id);if(timer)clearTimeout(timer);pendingDisconnect.delete(id)}
 function leaveRoom(socket){
+  cancelDeparture(socket.id);
   const code=socketRoom.get(socket.id);if(!code)return;
   const r=rooms.get(code);socketRoom.delete(socket.id);socket.leave(code);
   lastWorld.delete(socket.id);lastHit.delete(socket.id);
@@ -60,11 +65,29 @@ function leaveRoom(socket){
   r.players.delete(socket.id);io.to(code).emit('player-left');
   clearTimers(r);
   if(!r.players.size){rooms.delete(code);return;}
-  // Sem o parceiro a partida acaba; a sala volta ao lobby e aceita um novo jogador.
+  // Saída definitiva não transfere a autoridade da campanha.
   r.started=false;r.duel=null;r.worldState=null;
-  if(r.host===socket.id)r.host=r.players.keys().next().value;
+  if(r.host===socket.id){
+    io.to(code).emit('room-update',{code,players:0,host:null,mode:r.mode,started:false,names:{}});
+    for(const id of r.players.keys()){
+      cancelDeparture(id);socketRoom.delete(id);lastWorld.delete(id);lastHit.delete(id);
+      io.sockets.sockets.get(id)?.leave(code);
+    }
+    rooms.delete(code);return;
+  }
   updateRoom(r);
 }
+function suspendConnection(socket,reason){
+  const code=socketRoom.get(socket.id),r=rooms.get(code);
+  // O HTML não retoma placar/round de PvP. Lobby e saídas voluntárias encerram.
+  const recoverable=['transport close','transport error','ping timeout'].includes(reason);
+  if(!r||!r.started||r.mode!=='coop'||!recoverable){leaveRoom(socket);return}
+  const p=r.players.get(socket.id);if(!p)return;
+  p.connected=false;cancelDeparture(socket.id);
+  io.to(code).emit('player-left');updateRoom(r);
+  const timer=setTimeout(()=>leaveRoom(socket),RECOVERY_MS);timer.unref?.();pendingDisconnect.set(socket.id,timer);
+}
+
 function num(v,min,max,fallback=0){v=Number(v);return Number.isFinite(v)?Math.max(min,Math.min(max,v)):fallback;}
 const ID_RE=/^[a-zA-Z0-9_-]{1,24}$/;
 function cleanGear(g){
@@ -89,8 +112,19 @@ function cleanProj(list){
   }
   return out;
 }
+function cleanNet(n){
+  if(n===undefined)return undefined; // V6 continua identificável como legado no cliente.
+  if(!n||typeof n!=='object'||Array.isArray(n))return null;
+  try{
+    if(n.v!==7||!Number.isSafeInteger(n.epoch)||n.epoch<0)return null;
+    if(typeof n.match!=='string'||n.match.length>160)return null;
+    const raw=JSON.stringify(n);if(raw.length>1000000)return null;
+    return JSON.parse(raw); // preserva ações, confirmações, nonce, diálogos e progresso.
+  }catch(_){return null}
+}
 function cleanPlayerState(s={},name){
-  return {
+  const net=cleanNet(s.net);if(net===null)return null;
+  return {net,
     x:num(s.x,-100000,1000000),y:num(s.y,-1000,2000),vx:num(s.vx,-3000,3000),f:Number(s.f)<0?-1:1,
     run:!!s.run,air:num(s.air,-1,1),dodge:!!s.dodge,hurt:num(s.hurt,0,1),rage:!!s.rage,
     name:name||cleanName(s.name),hp:num(s.hp,0,100000),maxHp:num(s.maxHp,1,100000,1),
@@ -104,12 +138,13 @@ function cleanPlayerState(s={},name){
 }
 function cleanWorld(w){
   if(!w||typeof w!=='object')return null;
+  const net=cleanNet(w.net);if(net===null)return null;
   // Arrays omitidos continuam omitidos (o cliente só reenvia o que mudou).
   const arr=(v,n)=>Array.isArray(v)?v.slice(0,n):undefined;
   const obj=v=>v&&typeof v==='object'&&!Array.isArray(v)?v:null;
   let clean;
   try{
-    clean={
+    clean={net,
       seq:num(w.seq,0,1e12),full:!!w.full,area:num(w.area,0,5),sec:num(w.sec,-1,100),
       state:String(w.state||'play').slice(0,16),t:num(w.t,0,1e9),
       enemies:arr(w.enemies,300)||[],eids:arr(w.eids,400)||[],
@@ -152,6 +187,19 @@ function startDuelRound(r,first){
 }
 
 io.on('connection',socket=>{
+  // Socket.IO restaurou o ID e a associação; ainda confirmamos no cadastro real.
+  const restoredCode=socketRoom.get(socket.id),restored=rooms.get(restoredCode);
+  if(socket.recovered&&restored&&restored.players.has(socket.id)){
+    cancelDeparture(socket.id);restored.players.get(socket.id).connected=true;
+    socket.join(restoredCode);
+    setImmediate(()=>{
+      if(rooms.get(restoredCode)!==restored||!socket.connected)return;
+      updateRoom(restored);
+      // Nunca tratar o último delta em cache como snapshot completo.
+      if(restored.started&&restored.mode==='coop')io.to(restored.host).emit('world-resync');
+    });
+  }
+
   socket.on('create-room',(data={},ack=()=>{})=>{
     leaveRoom(socket);
     const code=makeCode(),room={code,host:socket.id,mode:data.mode==='pvp'?'pvp':'coop',
@@ -163,10 +211,10 @@ io.on('connection',socket=>{
     const code=String(data.code||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6);
     const room=rooms.get(code);
     if(!room)return ack({ok:false,error:'Sala não encontrada. Confira o código.'});
-    if(room.started)return ack({ok:false,error:'A partida já começou. Crie uma nova sala para entrar.'});
+    if(room.started&&!room.players.has(socket.id))return ack({ok:false,error:'A partida já começou. A sessão anterior não foi recuperada; volte à capa e crie outra sala.'});
     if(room.players.size>=2&&!room.players.has(socket.id))return ack({ok:false,error:'A sala já está cheia.'});
     if(socketRoom.get(socket.id)!==code)leaveRoom(socket);
-    room.players.set(socket.id,{name:cleanName(data.name)});
+    cancelDeparture(socket.id);room.players.set(socket.id,{name:cleanName(data.name),connected:true});
     socket.join(code);socketRoom.set(socket.id,code);
     ack({ok:true,code,mode:room.mode,id:socket.id});updateRoom(room);
   });
@@ -180,7 +228,8 @@ io.on('connection',socket=>{
     const code=String(data.code||''),room=rooms.get(code);
     if(!room||socketRoom.get(socket.id)!==code)return ack({ok:false,error:'Você não está nessa sala.'});
     if(room.host!==socket.id)return ack({ok:false,error:'Somente o criador pode iniciar.'});
-    if(room.players.size!==2)return ack({ok:false,error:'Espere seu amigo entrar na sala.'});
+    if(room.started&&!(room.mode==='pvp'&&room.duel?.over))return ack({ok:false,error:'A partida já está em andamento.'});
+    if(room.players.size!==2||[...room.players.values()].some(p=>p.connected===false))return ack({ok:false,error:'Espere seu amigo entrar na sala.'});
     clearTimers(room);
     room.mode=data.mode==='pvp'?'pvp':'coop';
     const area=Math.floor(num(data.area,0,5)),cpx=num(data.cpx,0,1000000);
@@ -197,7 +246,7 @@ io.on('connection',socket=>{
     if(!room)return;
     const me=room.players.get(socket.id);
     // O nome vem sempre do cadastro da sala: não depende do que o cliente envia a cada pacote.
-    const state=cleanPlayerState(data.state||{},me&&me.name);
+    const state=cleanPlayerState(data.state||{},me&&me.name);if(!state)return;
     socket.to(code).emit('player-state',{id:socket.id,state});
   });
   // O anfitrião é a autoridade do mundo compartilhado no modo cooperativo.
@@ -279,6 +328,7 @@ io.on('connection',socket=>{
       later(room,DUEL_BETWEEN_MS,()=>startDuelRound(room,false));
     }
   });
-  socket.on('disconnect',()=>leaveRoom(socket));
+  socket.on('disconnect',reason=>suspendConnection(socket,reason));
 });
-server.listen(PORT,'0.0.0.0',()=>console.log(`Penitente multiplayer listening on ${PORT}`));
+if(require.main===module)server.listen(PORT,'0.0.0.0',()=>console.log(`Penitente V7 / R9.1 listening on ${PORT}`));
+module.exports={server,io};

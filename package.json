@@ -1,16 +1,20 @@
 {
   "name": "penitente-inferno-eterno-multiplayer",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "description": "Servidor multiplayer cooperativo e PvP para Penitente: Inferno Eterno",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "node test-server.js"
   },
   "engines": {
     "node": ">=18"
   },
   "dependencies": {
-    "socket.io": "^4.8.1"
+    "socket.io": "4.8.1"
+  },
+  "devDependencies": {
+    "socket.io-client": "4.8.1"
   }
 }
