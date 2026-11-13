@@ -967,15 +967,16 @@ const Aud={ctx:null,out:null,mus:null,sfx:null,noiseBuf:null,ok:false,tgt:0,int:
 };
 
 /* ---------------- Entrada ---------------- */
+let touchControlsReady=false;
 const Input={down:{},press:{},sources:{},t:0,touch:false,
   map:{KeyA:'left',ArrowLeft:'left',KeyD:'right',ArrowRight:'right',KeyW:'jump',ArrowUp:'jump',Space:'jump',
     KeyJ:'attack',KeyZ:'attack',KeyK:'heavy',KeyX:'heavy',KeyL:'chain',KeyC:'chain',KeyQ:'tele',KeyV:'tele',
     KeyI:'fire',KeyB:'fire',ShiftLeft:'dodge',ShiftRight:'dodge',KeyS:'dodge',ArrowDown:'dodge',KeyE:'interact',KeyF:'interact',
     Escape:'pause',KeyP:'pause'},
-  set(a,v,source='default'){if(!this.sources[a])this.sources[a]={};const was=!!this.down[a];this.sources[a][source]=!!v;this.down[a]=Object.values(this.sources[a]).some(Boolean);if(this.down[a]&&!was)this.press[a]=this.t+.0001},
+  set(a,v,source='default'){if(!this.sources[a])this.sources[a]={};const was=!!this.down[a];if(v)this.sources[a][source]=true;else delete this.sources[a][source];this.down[a]=Object.values(this.sources[a]).some(Boolean);if(this.down[a]&&!was)this.press[a]=this.t+.0001},
   take(a){const p=this.press[a];if(p&&this.t-p<.18){this.press[a]=0;return true}return false},
   peek(a){const p=this.press[a];return !!(p&&this.t-p<.18)},
-  clear(){this.down={};this.press={};this.sources={}}
+  clear(){this.down={};this.press={};this.sources={};if(touchControlsReady)resetTouchState()}
 };
 
 /* ---------------- Controles personalizáveis (teclado, mouse e toque) ---------------- */
@@ -16401,21 +16402,23 @@ window.addEventListener('pointerup',e=>{if(e.pointerType==='mouse'){const ma=Inp
 cv.addEventListener('contextmenu',e=>e.preventDefault());
 document.addEventListener('contextmenu',e=>{if(scene==='play')e.preventDefault()});
 let dpadPtr=-1;
-const btnL=$('#touch .ln'),btnR=$('#touch .rn');
+const dpadPointers=new Map(),btnL=$('#touch .ln'),btnR=$('#touch .rn');
+function resetTouchState(){dpadPointers.clear();dpadPtr=-1;$$('#touch button.on').forEach(b=>b.classList.remove('on'))}
 function dpadSet(d){Input.set('left',d<0,'touch');Input.set('right',d>0,'touch');btnL.classList.toggle('on',d<0);btnR.classList.toggle('on',d>0)}
 function dpadAt(e){const el=document.elementFromPoint(e.clientX,e.clientY),b=el&&el.closest?el.closest('#touch button'):null;return b&&b.dataset.a==='left'?-1:b&&b.dataset.a==='right'?1:null}
 [btnL,btnR].forEach(b=>{
-  b.addEventListener('pointerdown',e=>{e.preventDefault();try{b.setPointerCapture(e.pointerId)}catch(_){}Aud.init();Aud.resume();dpadPtr=e.pointerId;dpadSet(b.dataset.a==='left'?-1:1)});
-  b.addEventListener('pointermove',e=>{if(e.pointerId!==dpadPtr)return;const d=dpadAt(e);if(d!==null)dpadSet(d)});
-  const up=e=>{if(e.pointerId===dpadPtr){dpadPtr=-1;dpadSet(0)}};
+  b.addEventListener('pointerdown',e=>{e.preventDefault();try{b.setPointerCapture(e.pointerId)}catch(_){}Aud.init();Aud.resume();dpadPtr=e.pointerId;const d=b.dataset.a==='left'?-1:1;dpadPointers.set(e.pointerId,d);dpadSet(d)});
+  b.addEventListener('pointermove',e=>{if(!dpadPointers.has(e.pointerId))return;const d=dpadAt(e);if(d!==null){dpadPointers.set(e.pointerId,d);if(e.pointerId===dpadPtr)dpadSet(d)}});
+  const up=e=>{if(!dpadPointers.has(e.pointerId))return;dpadPointers.delete(e.pointerId);if(e.pointerId===dpadPtr){const ids=Array.from(dpadPointers.keys());dpadPtr=ids.length?ids[ids.length-1]:-1;dpadSet(dpadPtr<0?0:dpadPointers.get(dpadPtr))}};
   b.addEventListener('pointerup',up);b.addEventListener('pointercancel',up);b.addEventListener('lostpointercapture',up);
 });
 $$('#touch button').forEach(b=>{
   const a=b.dataset.a;if(a==='left'||a==='right')return;
-  b.addEventListener('pointerdown',e=>{e.preventDefault();try{b.setPointerCapture(e.pointerId)}catch(_){}Aud.init();Aud.resume();Input.set(a,true,'touch');b.classList.add('on')});
-  const up=e=>{Input.set(a,false,'touch');b.classList.remove('on')};
+  b.addEventListener('pointerdown',e=>{e.preventDefault();try{b.setPointerCapture(e.pointerId)}catch(_){}Aud.init();Aud.resume();Input.set(a,true,'touch:'+e.pointerId);b.classList.add('on')});
+  const up=e=>{Input.set(a,false,'touch:'+e.pointerId);const sources=Input.sources[a]||{};b.classList.toggle('on',Object.keys(sources).some(k=>k.startsWith('touch:')&&sources[k]))};
   b.addEventListener('pointerup',up);b.addEventListener('pointercancel',up);b.addEventListener('lostpointercapture',up);
 });
+touchControlsReady=true;
 let fullTried=false;
 function tryFull(){
   if(fullTried)return;fullTried=true;

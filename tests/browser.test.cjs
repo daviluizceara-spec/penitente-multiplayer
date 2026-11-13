@@ -331,3 +331,30 @@ test('toques simultâneos de pulo e golpe permanecem independentes',async()=>{
   await page.locator('#touch [data-a="attack"]').dispatchEvent('pointerup',{pointerType:'touch',pointerId:22});
   assert.equal(await page.evaluate(()=>Input.down.attack),false);await page.close();
 });
+test('dois dedos no mesmo botão continuam ativos até ambos serem soltos',async()=>{
+  const page=await newPage();await page.evaluate(()=>{startArea(0,{fresh:true});R.state='play';R.dlg=null;R.paused=false;Input.clear()});
+  const button=page.locator('#touch [data-a="attack"]');
+  await button.dispatchEvent('pointerdown',{pointerType:'touch',pointerId:31});await button.dispatchEvent('pointerdown',{pointerType:'touch',pointerId:32});
+  await button.dispatchEvent('pointerup',{pointerType:'touch',pointerId:31});assert.equal(await page.evaluate(()=>Input.down.attack),true);
+  await button.dispatchEvent('pointerup',{pointerType:'touch',pointerId:32});assert.equal(await page.evaluate(()=>Input.down.attack),false);await page.close();
+});
+test('ao soltar um dedo do direcional, o outro mantém sua direção',async()=>{
+  const page=await newPage();await page.evaluate(()=>{startArea(0,{fresh:true});R.state='play';R.dlg=null;R.paused=false;Input.clear()});
+  const left=page.locator('#touch [data-a="left"]'),right=page.locator('#touch [data-a="right"]');
+  await left.dispatchEvent('pointerdown',{pointerType:'touch',pointerId:41});await right.dispatchEvent('pointerdown',{pointerType:'touch',pointerId:42});
+  await right.dispatchEvent('pointerup',{pointerType:'touch',pointerId:42});assert.deepEqual(await page.evaluate(()=>({left:!!Input.down.left,right:!!Input.down.right})),{left:true,right:false});
+  await page.evaluate(()=>Input.clear());await left.dispatchEvent('pointerup',{pointerType:'touch',pointerId:41});
+  assert.deepEqual(await page.evaluate(()=>({left:!!Input.down.left,right:!!Input.down.right})),{left:false,right:false});await page.close();
+});
+test('pausa cancela os dedos anteriores e não interrompe um novo toque',async()=>{
+  const page=await newPage();await page.evaluate(()=>{startArea(0,{fresh:true});R.state='play';R.dlg=null;R.paused=false;Input.clear()});
+  const attack=page.locator('#touch [data-a="attack"]');
+  await attack.dispatchEvent('pointerdown',{pointerType:'touch',pointerId:61});await page.evaluate(()=>Input.clear());
+  assert.equal(await page.evaluate(()=>!!Input.down.attack),false);
+  assert.equal(await attack.evaluate(el=>el.classList.contains('on')),false);
+  await attack.dispatchEvent('pointerdown',{pointerType:'touch',pointerId:62});await attack.dispatchEvent('pointerup',{pointerType:'touch',pointerId:61});
+  assert.equal(await page.evaluate(()=>Input.down.attack),true);
+  await attack.dispatchEvent('pointerup',{pointerType:'touch',pointerId:62});assert.equal(await page.evaluate(()=>Input.down.attack),false);
+  assert.equal(await page.evaluate(()=>Object.keys(Input.sources.attack||{}).filter(k=>k.startsWith('touch:')).length),0);
+  await page.close();
+});
