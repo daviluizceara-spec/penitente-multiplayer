@@ -254,3 +254,23 @@ test('golpe atinge inimigo no alcance e não repete dano no mesmo ataque',async(
   });
   assert.equal(result.first,1);assert.ok(result.after<result.before);assert.equal(result.second,0);assert.equal(result.last,result.after);assert.deepEqual(errors,[]);await page.close();
 });
+test('movimento rápido não atravessa paredes e permite passar acima delas',async()=>{
+  const page=await newPage();
+  const result=await page.evaluate(()=>{
+    startArea(0,{fresh:true});R.state='play';R.dlg=null;R.P.w=16;R.P.h=38;
+    R.solids=[{x:180,y:GY-50,w:4,h:50},{x:140,y:GY-50,w:4,h:50}];
+    function move(x,y,vx){Object.assign(R.P,{x,y,vx,vy:0});physics(R.P,1/60);return {x:R.P.x,vx:R.P.vx}}
+    return {right:move(100,GY,9000),left:move(220,GY,-9000),above:move(100,GY-90,9000)};
+  });
+  assert.deepEqual(result.right,{x:132,vx:0});assert.deepEqual(result.left,{x:192,vx:0});assert.equal(result.above.x,250);assert.equal(result.above.vx,9000);await page.close();
+});
+test('coyote time e pulo antecipado funcionam sem liberar pulo duplo',async()=>{
+  const page=await newPage();
+  const result=await page.evaluate(()=>{
+    startArea(0,{fresh:true});R.state='play';R.dlg=null;R.E=[];R.P.act=null;R.P.hurtT=0;R.P.rooted=0;
+    const P=R.P;Input.clear();Object.assign(P,{x:400,y:GY-5,vy:10,vx:0,onGround:false,coyote:.08,jumps:0});Input.set('jump',true,'test');updPlayer(1/60);const coyote=P.vy<0;
+    Input.clear();Object.assign(P,{x:400,y:GY-1,vy:100,vx:0,onGround:false,coyote:0,jumps:1,act:null});Input.set('jump',true,'test');updPlayer(1/60);const landed=P.onGround;updPlayer(1/60);const buffered=P.vy<0&&!P.onGround;
+    return {coyote,landed,buffered,secondJumpUnlocked:!!SAVE.skills.sp2};
+  });
+  assert.deepEqual(result,{coyote:true,landed:true,buffered:true,secondJumpUnlocked:false});await page.close();
+});

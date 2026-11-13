@@ -9185,7 +9185,12 @@ function physics(b,dt){
   let nx=b.x+b.vx*dt;
   for(const s of R.solids){
     if(s.dead||s.cw)continue;
-    if(b.y>s.y+1&&b.y-b.h<s.y+s.h&&nx+b.w/2>s.x&&nx-b.w/2<s.x+s.w){nx=b.x<=s.x+s.w/2?s.x-b.w/2:s.x+s.w+b.w/2;b.vx=0}
+    if(b.y>s.y+1&&b.y-b.h<s.y+s.h){
+      // Atravessamentos rápidos do protagonista ainda colidem com a primeira face encontrada.
+      if(b===R.P&&nx>b.x&&b.x+b.w/2<=s.x&&nx+b.w/2>s.x){nx=s.x-b.w/2;b.vx=0}
+      else if(b===R.P&&nx<b.x&&b.x-b.w/2>=s.x+s.w&&nx-b.w/2<s.x+s.w){nx=s.x+s.w+b.w/2;b.vx=0}
+      else if(nx+b.w/2>s.x&&nx-b.w/2<s.x+s.w){nx=b.x<=s.x+s.w/2?s.x-b.w/2:s.x+s.w+b.w/2;b.vx=0}
+    }
   }
   b.x=nx;
   const py=b.y;
