@@ -1,0 +1,34 @@
+'use strict';
+const {test, after} = require('node:test');
+const assert = require('node:assert/strict');
+const {io: client} = require('socket.io-client');
+const {server, io} = require('../server');
+const sockets = [];
+const event = (socket, name) => new Promise((resolve, reject) => {
+  const timer = setTimeout(() => reject(new Error(`Timed out: ${name}`)), 3000);
+  socket.once(name, data => { clearTimeout(timer); resolve(data); });
+});
+const ack = (socket, name, payload) => new Promise((resolve, reject) => socket.timeout(3000).emit(name, payload, (err, data) => err ? reject(err) : resolve(data)));
+after(async () => { for (const socket of sockets) socket.disconnect(); await new Promise(resolve => io.close(resolve)); });
+test('duas pessoas entram e somente o anfitrião inicia a partida', async () => {
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  const url = `http://127.0.0.1:${server.address().port}`;
+  const host = client(url, {transports:['websocket']}), guest = client(url, {transports:['websocket']}), third = client(url, {transports:['websocket']});
+  sockets.push(host, guest, third);
+  await Promise.all([event(host,'connect'), event(guest,'connect'), event(third,'connect')]);
+  const room = await ack(host,'create-room',{name:'Anfitrião', mode:'coop'});
+  assert.equal(room.ok,true);
+  assert.equal((await ack(guest,'join-room',{name:'Convidado',code:room.code})).ok,true);
+  assert.equal((await ack(third,'join-room',{name:'Terceiro',code:room.code})).ok,false);
+  assert.equal((await ack(guest,'start-match',{code:room.code,mode:'coop'})).ok,false);
+  const start = event(guest,'match-start');
+  assert.equal((await ack(host,'start-match',{code:room.code,mode:'coop',area:0})).ok,true);
+  assert.equal((await start).code,room.code);
+  const net={v:7,epoch:1,match:'teste',actions:[{id:4}]};
+  const state=event(guest,'player-state');
+  host.emit('player-state',{code:room.code,state:{x:42,net}});
+  assert.deepEqual((await state).state.net,net);
+  const world=event(guest,'world-state');
+  host.emit('world-state',{code:room.code,world:{full:true,seq:1,net}});
+  assert.deepEqual((await world).net,net);
+});

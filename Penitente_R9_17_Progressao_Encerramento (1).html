@@ -1284,8 +1284,8 @@ const GEAR=[
   {id:'e1',slot:'helm',n:'Elmo de Penitência',d:'+20 de energia e +8% de dano de fogo.',cost:280,lvl:3,b:{en:20,fire:.08}},
   {id:'e2',slot:'helm',n:'Coroa de Espinhos',d:'+8% de crítico e +18% de dano de fogo.',cost:850,lvl:7,b:{crit:.08,fire:.18}},
   {id:'a0',slot:'armor',n:'Manto Rasgado',d:'Sem bônus.',cost:0,lvl:1,b:{}},
-  {id:'a1',slot:'armor',n:'Couraça de Cinzas',d:'+30 de vida e 6% de redução de dano.',cost:360,lvl:4,b:{hp:18,dr:.06}},
-  {id:'a2',slot:'armor',n:'Armadura Obsidiana',d:'+60 de vida e 12% de redução de dano.',cost:1050,lvl:8,b:{hp:36,dr:.12}},
+  {id:'a1',slot:'armor',n:'Couraça de Cinzas',d:'+18 de vida e 6% de redução de dano.',cost:360,lvl:4,b:{hp:18,dr:.06}},
+  {id:'a2',slot:'armor',n:'Armadura Obsidiana',d:'+36 de vida e 12% de redução de dano.',cost:1050,lvl:8,b:{hp:36,dr:.12}},
   {id:'c0',slot:'chain',n:'Arpão de Ferro',d:'Corrente padrão. Sem bônus.',cost:0,lvl:1,b:{}},
   {id:'c1',slot:'chain',n:'Arpão Ardente',d:'+20% de dano e +15% de alcance do arpão.',cost:300,lvl:3,b:{chain:.2,range:.15}},
   {id:'c2',slot:'chain',n:'Arpão Sombrio',d:'+40% de dano e +30% de alcance do arpão.',cost:900,lvl:7,b:{chain:.4,range:.3}}
@@ -16340,10 +16340,10 @@ window.addEventListener('keydown',e=>{
     if(e.repeat)return;
     if(!R||R.paused)return;
     Aud.init();Aud.resume();
-    Input.set(a,true);
+    Input.set(a,true,'key:'+e.code);
   }
 });
-window.addEventListener('keyup',e=>{const a=Input.map[normCode(e.code)];if(a&&a!=='pause')Input.set(a,false)});
+window.addEventListener('keyup',e=>{const a=Input.map[normCode(e.code)];if(a&&a!=='pause')Input.set(a,false,'key:'+e.code)});
 cv.addEventListener('pointerdown',e=>{
   if(scene==='play'&&R&&!R.paused){
     const vx=e.offsetX/cv.clientWidth*960,vy=e.offsetY/cv.clientHeight*540;
@@ -16352,9 +16352,9 @@ cv.addEventListener('pointerdown',e=>{
   }
   if(scene!=='play'||!R||R.paused||e.pointerType!=='mouse')return;
   e.preventDefault();Aud.init();Aud.resume();
-  const ma=Input.map['Mouse'+e.button];if(ma==='pause'){if(!(R&&R.state==='talk'&&R.dlg))pauseGame()}else if(ma)Input.set(ma,true);
+  const ma=Input.map['Mouse'+e.button];if(ma==='pause'){if(!(R&&R.state==='talk'&&R.dlg))pauseGame()}else if(ma)Input.set(ma,true,'mouse:'+e.button);
 });
-window.addEventListener('pointerup',e=>{if(e.pointerType==='mouse'){const ma=Input.map['Mouse'+e.button];if(ma&&ma!=='pause')Input.set(ma,false)}});
+window.addEventListener('pointerup',e=>{if(e.pointerType==='mouse'){const ma=Input.map['Mouse'+e.button];if(ma&&ma!=='pause')Input.set(ma,false,'mouse:'+e.button)}});
 cv.addEventListener('contextmenu',e=>e.preventDefault());
 document.addEventListener('contextmenu',e=>{if(scene==='play')e.preventDefault()});
 let dpadPtr=-1;

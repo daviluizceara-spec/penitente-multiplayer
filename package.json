@@ -6,7 +6,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "test": "node test-server.js"
+    "test": "node --test tests/*.test.cjs"
   },
   "engines": {
     "node": ">=18"
@@ -15,6 +15,7 @@
     "socket.io": "4.8.1"
   },
   "devDependencies": {
+    "playwright-core": "^1.56.1",
     "socket.io-client": "4.8.1"
   }
 }

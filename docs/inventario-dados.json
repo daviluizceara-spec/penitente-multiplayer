@@ -1,0 +1,1598 @@
+{
+  "stages": [
+    {
+      "id": "s1",
+      "nome": "Portões do Submundo",
+      "chefe": "Kravok, o Carcereiro"
+    },
+    {
+      "id": "s2",
+      "nome": "Floresta das Almas Perdidas",
+      "chefe": "Zharrak, a Fome Sem Fim"
+    },
+    {
+      "id": "s3",
+      "nome": "Catedral dos Santos Devorados",
+      "chefe": "O Devorador de Santos"
+    },
+    {
+      "id": "s4",
+      "nome": "Fortaleza de Ossos",
+      "chefe": "Valdreth, Comandante dos Ossos"
+    },
+    {
+      "id": "s5",
+      "nome": "Câmara do Espelho Negro",
+      "chefe": "O Penitente Corrompido"
+    },
+    {
+      "id": "s6",
+      "nome": "Abismo dos Grilhões",
+      "chefe": "O Carrasco do Abismo"
+    }
+  ],
+  "campanha2": [
+    "Estação das Cinzas",
+    "Bairro da Vigília",
+    "Templo dos Nomes",
+    "Torre da Sétima Badalada"
+  ],
+  "inimigos": [
+    {
+      "id": "soldier",
+      "nome": "Soldado Amaldiçoado",
+      "tipo": "inimigo"
+    },
+    {
+      "id": "runner",
+      "nome": "Corredor Infernal",
+      "tipo": "inimigo"
+    },
+    {
+      "id": "archer",
+      "nome": "Arqueiro Espectral",
+      "tipo": "inimigo"
+    },
+    {
+      "id": "brute",
+      "nome": "Bruto de Obsidiana",
+      "tipo": "inimigo"
+    },
+    {
+      "id": "assassin",
+      "nome": "Assassino Sombrio",
+      "tipo": "inimigo"
+    },
+    {
+      "id": "priest",
+      "nome": "Sacerdote Corrompido",
+      "tipo": "inimigo"
+    },
+    {
+      "id": "devourer",
+      "nome": "Devorador de Almas",
+      "tipo": "inimigo"
+    },
+    {
+      "id": "hunter",
+      "nome": "Caçador de Correntes",
+      "tipo": "inimigo"
+    },
+    {
+      "id": "lantern",
+      "nome": "Lanternário Pestilento",
+      "tipo": "inimigo"
+    },
+    {
+      "id": "monk",
+      "nome": "Monge Profanado",
+      "tipo": "inimigo"
+    },
+    {
+      "id": "starved",
+      "nome": "Aldeão Faminto",
+      "tipo": "inimigo"
+    },
+    {
+      "id": "wisp",
+      "nome": "Fogo-Fátuo",
+      "tipo": "inimigo"
+    },
+    {
+      "id": "weaver",
+      "nome": "Tecelã de Raízes",
+      "tipo": "inimigo"
+    },
+    {
+      "id": "woodcutter",
+      "nome": "Lenhador Devorado",
+      "tipo": "inimigo"
+    },
+    {
+      "id": "pastor",
+      "nome": "Ilmar, o Pastor das Luzes",
+      "tipo": "minichefe"
+    },
+    {
+      "id": "scribe",
+      "nome": "Escriba Cinzento",
+      "tipo": "inimigo"
+    },
+    {
+      "id": "censor",
+      "nome": "Censor de Cera",
+      "tipo": "inimigo"
+    },
+    {
+      "id": "orlan",
+      "nome": "Orlan, o Carcereiro das Correntes",
+      "tipo": "minichefe"
+    },
+    {
+      "id": "b_guard",
+      "nome": "Kravok, o Carcereiro",
+      "tipo": "chefe"
+    },
+    {
+      "id": "b_beast",
+      "nome": "Zharrak, a Fome Sem Fim",
+      "tipo": "chefe"
+    },
+    {
+      "id": "b_devour",
+      "nome": "O Devorador de Santos",
+      "tipo": "chefe"
+    },
+    {
+      "id": "b_cmd",
+      "nome": "Valdreth, Comandante dos Ossos",
+      "tipo": "chefe"
+    },
+    {
+      "id": "b_mirror",
+      "nome": "O Penitente Corrompido",
+      "tipo": "chefe"
+    },
+    {
+      "id": "b_carrasco",
+      "nome": "O Carrasco do Abismo",
+      "tipo": "chefe"
+    },
+    {
+      "id": "marcador",
+      "nome": "Marcador de Cinzas",
+      "tipo": "inimigo"
+    },
+    {
+      "id": "portaescudo",
+      "nome": "Portador do Escudo-Tumba",
+      "tipo": "inimigo"
+    },
+    {
+      "id": "catador",
+      "nome": "Catador de Relíquias",
+      "tipo": "inimigo"
+    },
+    {
+      "id": "maldren",
+      "nome": "Maldren, o Leitor de Sentenças",
+      "tipo": "minichefe"
+    },
+    {
+      "id": "carpideira",
+      "nome": "Carpideira Cega",
+      "tipo": "inimigo"
+    },
+    {
+      "id": "vigia",
+      "nome": "Vigia de Vitral",
+      "tipo": "inimigo"
+    },
+    {
+      "id": "fsanto",
+      "nome": "Falso Santo",
+      "tipo": "inimigo"
+    },
+    {
+      "id": "ottilia",
+      "nome": "Madre Ottília, a Madre do Vitral Negro",
+      "tipo": "minichefe"
+    },
+    {
+      "id": "recruta",
+      "nome": "Recruta de Osso",
+      "tipo": "inimigo"
+    },
+    {
+      "id": "estandarte",
+      "nome": "Estandarte Vivo",
+      "tipo": "inimigo"
+    },
+    {
+      "id": "caoosso",
+      "nome": "Cão de Ossos",
+      "tipo": "inimigo"
+    },
+    {
+      "id": "brannoch",
+      "nome": "Sargento Brannoch, o Escudo-Mor",
+      "tipo": "minichefe"
+    },
+    {
+      "id": "ysolda",
+      "nome": "Arqueira-Mor Ysolda, a Corda Sem Volta",
+      "tipo": "minichefe"
+    },
+    {
+      "id": "vigiasr",
+      "nome": "Vigia sem Rosto",
+      "tipo": "inimigo"
+    },
+    {
+      "id": "eco",
+      "nome": "Eco do Penitente",
+      "tipo": "inimigo"
+    },
+    {
+      "id": "apagado",
+      "nome": "Escriba Apagado",
+      "tipo": "inimigo"
+    },
+    {
+      "id": "sentinela",
+      "nome": "Sentinela do Vazio",
+      "tipo": "inimigo"
+    },
+    {
+      "id": "monge",
+      "nome": "O Monge Corrompido",
+      "tipo": "minichefe"
+    },
+    {
+      "id": "c23faith",
+      "nome": "Fiel do Sono",
+      "tipo": "inimigo"
+    },
+    {
+      "id": "c23acolyte",
+      "nome": "Acólito do Último Sono",
+      "tipo": "inimigo"
+    },
+    {
+      "id": "c23echo",
+      "nome": "Portador de Ecos",
+      "tipo": "inimigo"
+    },
+    {
+      "id": "c24sacristan",
+      "nome": "Sacristão de Cera",
+      "tipo": "inimigo"
+    },
+    {
+      "id": "c24shade",
+      "nome": "Nome Apagado",
+      "tipo": "inimigo"
+    },
+    {
+      "id": "c24puppet",
+      "nome": "Procissão Suspensa",
+      "tipo": "inimigo"
+    },
+    {
+      "id": "c24puller",
+      "nome": "Puxador de Fios",
+      "tipo": "inimigo"
+    },
+    {
+      "id": "c24maura",
+      "nome": "A Vigília de Maura",
+      "tipo": "inimigo"
+    },
+    {
+      "id": "c24copy",
+      "nome": "Lembrança Vestida",
+      "tipo": "inimigo"
+    },
+    {
+      "id": "c24chain",
+      "nome": "Corrente do Altar",
+      "tipo": "inimigo"
+    },
+    {
+      "id": "c25arauto",
+      "nome": "Arauto da Sétima Badalada",
+      "tipo": "inimigo"
+    },
+    {
+      "id": "c25eco",
+      "nome": "Eco da Badalada",
+      "tipo": "inimigo"
+    },
+    {
+      "id": "c25fiel",
+      "nome": "Morador Dominado",
+      "tipo": "inimigo"
+    },
+    {
+      "id": "c25monstro",
+      "nome": "Amálgama de Cinza",
+      "tipo": "inimigo"
+    },
+    {
+      "id": "c25santo",
+      "nome": "O Santo Sob a Cidade",
+      "tipo": "inimigo"
+    },
+    {
+      "id": "c25ivar",
+      "nome": "Ivar",
+      "tipo": "inimigo"
+    },
+    {
+      "id": "c25imagem",
+      "nome": "Imagem da Memória",
+      "tipo": "inimigo"
+    },
+    {
+      "id": "c25sino",
+      "nome": "Sino da Vigília",
+      "tipo": "inimigo"
+    },
+    {
+      "id": "c2cobrador",
+      "nome": "Cobrador de Cinzas",
+      "tipo": "inimigo"
+    },
+    {
+      "id": "c2sineiro",
+      "nome": "Sineiro do Último Trem",
+      "tipo": "inimigo"
+    },
+    {
+      "id": "c2foguista",
+      "nome": "Foguista da Locomotiva",
+      "tipo": "inimigo"
+    },
+    {
+      "id": "c2maquinista",
+      "nome": "Maquinista do Vagonete",
+      "tipo": "inimigo"
+    },
+    {
+      "id": "c2concha",
+      "nome": "Concha de Sino",
+      "tipo": "inimigo"
+    }
+  ],
+  "equipamentos": [
+    {
+      "id": "s0",
+      "nome": "Cutelo Penitente"
+    },
+    {
+      "id": "s1",
+      "nome": "Falcata Amaldiçoada"
+    },
+    {
+      "id": "s2",
+      "nome": "Lâmina do Abismo"
+    },
+    {
+      "id": "s3",
+      "nome": "Fio do Carrasco"
+    },
+    {
+      "id": "e0",
+      "nome": "Capuz de Cinzas"
+    },
+    {
+      "id": "e1",
+      "nome": "Elmo de Penitência"
+    },
+    {
+      "id": "e2",
+      "nome": "Coroa de Espinhos"
+    },
+    {
+      "id": "a0",
+      "nome": "Manto Rasgado"
+    },
+    {
+      "id": "a1",
+      "nome": "Couraça de Cinzas"
+    },
+    {
+      "id": "a2",
+      "nome": "Armadura Obsidiana"
+    },
+    {
+      "id": "c0",
+      "nome": "Arpão de Ferro"
+    },
+    {
+      "id": "c1",
+      "nome": "Arpão Ardente"
+    },
+    {
+      "id": "c2",
+      "nome": "Arpão Sombrio"
+    },
+    {
+      "id": "c3",
+      "nome": "Corrente do Esquecimento"
+    },
+    {
+      "id": "h3",
+      "nome": "Máscara Sem Rosto"
+    },
+    {
+      "id": "a3",
+      "nome": "Manto do Primeiro Penitente"
+    },
+    {
+      "id": "s4",
+      "nome": "Lâmina Rasurada"
+    }
+  ],
+  "habilidades": [
+    {
+      "id": "ch1",
+      "nome": "Elos Longos"
+    },
+    {
+      "id": "ch2",
+      "nome": "Corrente Pesada"
+    },
+    {
+      "id": "ch3",
+      "nome": "Corrente Tripla"
+    },
+    {
+      "id": "ch4",
+      "nome": "Combo de Aproximação"
+    },
+    {
+      "id": "fo1",
+      "nome": "Punhos de Ferro"
+    },
+    {
+      "id": "fo2",
+      "nome": "Pele de Pedra"
+    },
+    {
+      "id": "fo3",
+      "nome": "Carrasco"
+    },
+    {
+      "id": "sp1",
+      "nome": "Passos Fantasmas"
+    },
+    {
+      "id": "sp2",
+      "nome": "Salto Espectral"
+    },
+    {
+      "id": "sp3",
+      "nome": "Contra-golpe"
+    },
+    {
+      "id": "sp4",
+      "nome": "Brasa Dupla"
+    },
+    {
+      "id": "ve1",
+      "nome": "Pés de Brasa"
+    },
+    {
+      "id": "ve2",
+      "nome": "Lâminas Rápidas"
+    },
+    {
+      "id": "ve3",
+      "nome": "Fôlego Infernal"
+    },
+    {
+      "id": "fl1",
+      "nome": "Rastro Flamejante"
+    },
+    {
+      "id": "fl2",
+      "nome": "Combustão Ampliada"
+    },
+    {
+      "id": "fl3",
+      "nome": "Lâmina Incendiária"
+    },
+    {
+      "id": "fl4",
+      "nome": "Inferno Eterno"
+    },
+    {
+      "id": "in1",
+      "nome": "Colheita de Almas"
+    },
+    {
+      "id": "in2",
+      "nome": "Sede de Fúria"
+    },
+    {
+      "id": "in3",
+      "nome": "Fúria Prolongada"
+    }
+  ],
+  "dialogos": [
+    "prologue",
+    "cinzeiro_0",
+    "cinzeiro_r",
+    "talio_0",
+    "kravok_pre",
+    "kravok_post",
+    "maera_0",
+    "maera_r",
+    "zharrak_pre",
+    "zharrak_post",
+    "anselmo_0",
+    "anselmo_r",
+    "devorador_pre",
+    "devorador_post",
+    "a4_enter",
+    "valdreth_pre",
+    "valdreth_post",
+    "a5_enter",
+    "corrompido_pre",
+    "corrompido_post",
+    "a6_enter",
+    "carrasco_pre",
+    "carrasco_p2",
+    "carrasco_p3",
+    "carrasco_post",
+    "a1_lapide",
+    "cinzeiro_1",
+    "alma_1",
+    "alma_2",
+    "ferido_0",
+    "ferido_s",
+    "ferido_k",
+    "ferido_r",
+    "alma_3",
+    "cinzeiro_2s",
+    "cinzeiro_2k",
+    "cinzeiro_2n",
+    "alma_4",
+    "a1_cela",
+    "talio_1",
+    "kravok_pre2",
+    "kravok_p2",
+    "kravok_post2",
+    "a2_enter",
+    "a2_marca",
+    "maera_1",
+    "maera_2",
+    "a2_alma_1",
+    "a2_bosque",
+    "a2_alma_2",
+    "a2_vila",
+    "ilmar_pre",
+    "ilmar_post",
+    "a2_toca",
+    "a2_odric_f",
+    "a2_bigorna",
+    "zharrak_pre2",
+    "zharrak_p2",
+    "zharrak_post2",
+    "a3_enter",
+    "a3_memoria",
+    "anselmo_1",
+    "anselmo_1r",
+    "anselmo_2",
+    "anselmo_2r",
+    "arq_porta",
+    "arq_enter",
+    "arq_estantes",
+    "arq_tome",
+    "arq_cofre",
+    "orlan_pre",
+    "orlan_post",
+    "ending",
+    "maldren_pre",
+    "maldren_post",
+    "ab_corpos",
+    "ab_alma1",
+    "ab_ponte",
+    "ab_guarda",
+    "ab_cadafalso",
+    "ab_alma2",
+    "ab_portao",
+    "a6_post2",
+    "anselmo_3",
+    "anselmo_3r",
+    "crip_lacre",
+    "crip_porta",
+    "crip_enter",
+    "crip_ossuario",
+    "crip_capela",
+    "tiago_dlg",
+    "ottilia_pre",
+    "ottilia_post",
+    "crip_camara",
+    "crip_memoria",
+    "arm_porta",
+    "arm_enter",
+    "rennick_dlg",
+    "rennick_r",
+    "arm_galeria",
+    "arm_praca",
+    "brannoch_pre",
+    "brannoch_post",
+    "amei_porta",
+    "amei_enter",
+    "amei_vento",
+    "amei_torre",
+    "amei_alma",
+    "ysolda_pre",
+    "ysolda_post",
+    "sala_camara",
+    "rennick_portao",
+    "sala_memoria",
+    "vz_porta",
+    "vz_enter",
+    "monge_pre",
+    "monge_post",
+    "vz_primeiro",
+    "c2_cinzas",
+    "c2_maura",
+    "c2_mapa",
+    "c2_memoria",
+    "c2_ivar",
+    "c2_fragmentos",
+    "c2_vespera",
+    "c23_bairro",
+    "c23_res",
+    "c23_casa",
+    "c23_lio",
+    "c23_tuneis",
+    "c23_maura",
+    "c23_topo",
+    "c23_sino",
+    "c23_ivar",
+    "c23_arquivo",
+    "c23_fim",
+    "c24_escada",
+    "c24_nomes",
+    "c24_mem0",
+    "c24_mem1",
+    "c24_mem2",
+    "c24_sac",
+    "c24_sacfim",
+    "c24_verdade",
+    "c24_ponte",
+    "c24_sora",
+    "c24_sala",
+    "c24_door0",
+    "c24_door1",
+    "c24_door2",
+    "c24_altar",
+    "c24_liberta",
+    "c25_altar",
+    "c25_sora",
+    "c25_praca",
+    "c25_arauto",
+    "c25_torre",
+    "c25_revelacao",
+    "c25_santo",
+    "c25_final",
+    "w2_silas",
+    "w2_silas_r",
+    "w2_marga",
+    "w2_marga_r",
+    "w2_basilio",
+    "w2_basilio_r",
+    "w2_dorio",
+    "w2_dorio_r",
+    "w2_ennio",
+    "w2_ennio_r",
+    "w2_pio",
+    "w2_pio_r",
+    "c2_res_intro"
+  ],
+  "memorias": [
+    {
+      "id": "l1",
+      "nome": "O Portão"
+    },
+    {
+      "id": "l2",
+      "nome": "Diário do Carcereiro"
+    },
+    {
+      "id": "l3",
+      "nome": "Carta queimada"
+    },
+    {
+      "id": "l4",
+      "nome": "Livro de turnos da Ordem"
+    },
+    {
+      "id": "l5",
+      "nome": "Fragmento de Alma"
+    },
+    {
+      "id": "l6",
+      "nome": "Aviso aos Viajantes"
+    },
+    {
+      "id": "l7",
+      "nome": "Canção da Floresta"
+    },
+    {
+      "id": "l8",
+      "nome": "Cavalinho de madeira"
+    },
+    {
+      "id": "l9",
+      "nome": "Hino dos Santos"
+    },
+    {
+      "id": "l10",
+      "nome": "Confessionário"
+    },
+    {
+      "id": "l11",
+      "nome": "Vitral partido"
+    },
+    {
+      "id": "l12",
+      "nome": "Carta ao Capitão"
+    },
+    {
+      "id": "l13",
+      "nome": "Pacto de Ossos"
+    },
+    {
+      "id": "l14",
+      "nome": "Ordens do Comandante"
+    },
+    {
+      "id": "l15",
+      "nome": "Carta que nunca partiu"
+    },
+    {
+      "id": "l16",
+      "nome": "O Primeiro Penitente"
+    },
+    {
+      "id": "l17",
+      "nome": "Reflexo adiantado"
+    },
+    {
+      "id": "l18",
+      "nome": "Voz no vidro"
+    },
+    {
+      "id": "l19",
+      "nome": "Anotação do Imperador"
+    },
+    {
+      "id": "l20",
+      "nome": "Gravura no vidro"
+    },
+    {
+      "id": "l21",
+      "nome": "Lição do Mestre"
+    },
+    {
+      "id": "l22",
+      "nome": "Elos do Carrasco"
+    },
+    {
+      "id": "l23",
+      "nome": "Marcas no cadafalso"
+    },
+    {
+      "id": "l24",
+      "nome": "Porta de ferro rubro"
+    },
+    {
+      "id": "l28",
+      "nome": "Lápide sem nome"
+    },
+    {
+      "id": "l29",
+      "nome": "Sino dos Portões"
+    },
+    {
+      "id": "l30",
+      "nome": "Elmo da Ordem"
+    },
+    {
+      "id": "l31",
+      "nome": "Ordem selada"
+    },
+    {
+      "id": "l32",
+      "nome": "Placa da vila"
+    },
+    {
+      "id": "l33",
+      "nome": "Caderno de Odric"
+    },
+    {
+      "id": "l34",
+      "nome": "Encomenda das mil correntes"
+    },
+    {
+      "id": "l35",
+      "nome": "Coleira do sabujo"
+    },
+    {
+      "id": "l36",
+      "nome": "Sermão das luzes"
+    },
+    {
+      "id": "l37",
+      "nome": "Adega selada"
+    },
+    {
+      "id": "ab5",
+      "nome": "Selo do Leitor"
+    },
+    {
+      "id": "ab1",
+      "nome": "Rol das Execuções"
+    },
+    {
+      "id": "ab2",
+      "nome": "Sentença nº 1"
+    },
+    {
+      "id": "ab3",
+      "nome": "Nota do escrivão"
+    },
+    {
+      "id": "ab4",
+      "nome": "Cabo do machado"
+    },
+    {
+      "id": "ab7",
+      "nome": "A ordem devolvida"
+    },
+    {
+      "id": "ab6",
+      "nome": "O Cabo Partido"
+    },
+    {
+      "id": "l25",
+      "nome": "Cripta dos Esquecidos"
+    },
+    {
+      "id": "l26",
+      "nome": "Sacrário Proibido"
+    },
+    {
+      "id": "l27",
+      "nome": "Cela do Último Penitente"
+    },
+    {
+      "id": "l38",
+      "nome": "Ordem original do Conselho"
+    },
+    {
+      "id": "l39",
+      "nome": "Confissão do Arquivista"
+    },
+    {
+      "id": "l40",
+      "nome": "Os Treze da Vigília"
+    },
+    {
+      "id": "l41",
+      "nome": "Livro da Noite de Santa Brasa"
+    },
+    {
+      "id": "l42",
+      "nome": "Carta não enviada de Orlan"
+    },
+    {
+      "id": "l43",
+      "nome": "Os dois partidos da Ordem"
+    },
+    {
+      "id": "l44",
+      "nome": "Inventário do Cofre"
+    },
+    {
+      "id": "l45",
+      "nome": "Ata dos Guardiões"
+    },
+    {
+      "id": "l46",
+      "nome": "Ordem de leitura"
+    },
+    {
+      "id": "l47",
+      "nome": "Chave de Cera dos Treze"
+    },
+    {
+      "id": "c_ep_agnes",
+      "nome": "Epitáfio de Agnes"
+    },
+    {
+      "id": "c_ep_bento",
+      "nome": "Epitáfio de Bento"
+    },
+    {
+      "id": "c_ep_clara",
+      "nome": "Epitáfio de Clara"
+    },
+    {
+      "id": "c_ep_domingos",
+      "nome": "Epitáfio de Domingos"
+    },
+    {
+      "id": "c_ep_eulalia",
+      "nome": "Epitáfio de Eulália"
+    },
+    {
+      "id": "c_ep_fausto",
+      "nome": "Epitáfio de Fausto"
+    },
+    {
+      "id": "c_ep_gertrudes",
+      "nome": "Epitáfio de Gertrudes"
+    },
+    {
+      "id": "c_ep_hilario",
+      "nome": "Epitáfio de Hilário"
+    },
+    {
+      "id": "c_ep_ines",
+      "nome": "Epitáfio de Inês"
+    },
+    {
+      "id": "c_ep_jeronimo",
+      "nome": "Epitáfio de Jerônimo"
+    },
+    {
+      "id": "c_ep_lucia",
+      "nome": "Epitáfio de Lúcia"
+    },
+    {
+      "id": "c_ep_mateus",
+      "nome": "Epitáfio de Mateus"
+    },
+    {
+      "id": "c_alim1",
+      "nome": "Registro das Entregas"
+    },
+    {
+      "id": "c_alim2",
+      "nome": "Parede do Ossuário"
+    },
+    {
+      "id": "c_alim3",
+      "nome": "Bilhete de um Alimentado"
+    },
+    {
+      "id": "c_ott1",
+      "nome": "Chaves da Nave"
+    },
+    {
+      "id": "c_ott2",
+      "nome": "Vitral Negro"
+    },
+    {
+      "id": "c_confissao",
+      "nome": "A última confissão dos Treze"
+    },
+    {
+      "id": "c_nic1",
+      "nome": "Marcas na Câmara"
+    },
+    {
+      "id": "c_nic2",
+      "nome": "A cadeira sob o altar"
+    },
+    {
+      "id": "c_nic_test",
+      "nome": "Testamento de Nicanor"
+    },
+    {
+      "id": "a4_cartilha",
+      "nome": "Cartilha do Recruta"
+    },
+    {
+      "id": "a4_juramento",
+      "nome": "Juramento de Ossos"
+    },
+    {
+      "id": "a4_canil",
+      "nome": "Canil dos Ossos"
+    },
+    {
+      "id": "a4_contrapesos",
+      "nome": "Contrapesos da Grade"
+    },
+    {
+      "id": "a4_desertores",
+      "nome": "Lista dos que Desertaram"
+    },
+    {
+      "id": "a4_estandarte",
+      "nome": "Estandarte da Guarnição"
+    },
+    {
+      "id": "a4_inventario",
+      "nome": "Inventário da Armaria"
+    },
+    {
+      "id": "a4_diario",
+      "nome": "Diário do Sargento Brannoch"
+    },
+    {
+      "id": "a4_ordem",
+      "nome": "Ordens de Guarda"
+    },
+    {
+      "id": "a4_escala",
+      "nome": "Escala da Noite do Portão"
+    },
+    {
+      "id": "a4_vento",
+      "nome": "Vento das Ameias"
+    },
+    {
+      "id": "a4_balista",
+      "nome": "Manual da Balista"
+    },
+    {
+      "id": "a4_corneta",
+      "nome": "Corneta Rachada"
+    },
+    {
+      "id": "a4_corda",
+      "nome": "A Corda Sem Volta"
+    },
+    {
+      "id": "a4_diario_ysolda",
+      "nome": "Diário de Ysolda"
+    },
+    {
+      "id": "a4_sala_trava",
+      "nome": "Trava do Portão"
+    },
+    {
+      "id": "a4_sala_lacre",
+      "nome": "Lacre Quebrado"
+    },
+    {
+      "id": "a4_sala_test",
+      "nome": "Testamento de Valdreth"
+    },
+    {
+      "id": "vz1",
+      "nome": "Rostos lixados"
+    },
+    {
+      "id": "vz2",
+      "nome": "Lousa raspada"
+    },
+    {
+      "id": "vz3",
+      "nome": "O corredor que muda"
+    },
+    {
+      "id": "vz4",
+      "nome": "Sala do Silêncio"
+    },
+    {
+      "id": "vz5",
+      "nome": "Confissão do Monge"
+    },
+    {
+      "id": "vz6",
+      "nome": "O nome arrancado"
+    },
+    {
+      "id": "vz7",
+      "nome": "Voto dos Treze"
+    },
+    {
+      "id": "vz8",
+      "nome": "A palavra raspada"
+    },
+    {
+      "id": "vz9",
+      "nome": "Registro do Prior"
+    },
+    {
+      "id": "vz10",
+      "nome": "Lição sob a lousa"
+    },
+    {
+      "id": "vz11",
+      "nome": "Último registro do Prior"
+    },
+    {
+      "id": "w1v1",
+      "nome": "Carta sobre o telhado"
+    },
+    {
+      "id": "w1v2",
+      "nome": "Corda cortada"
+    },
+    {
+      "id": "w2v1",
+      "nome": "Lanterna da copa"
+    },
+    {
+      "id": "w2v2",
+      "nome": "Lista do mutirão"
+    },
+    {
+      "id": "w2v3",
+      "nome": "Marcas de dentes"
+    },
+    {
+      "id": "w3v1",
+      "nome": "Coro riscado"
+    },
+    {
+      "id": "w3v2",
+      "nome": "Velas dos mártires"
+    },
+    {
+      "id": "w3v3",
+      "nome": "Chave sem fechadura"
+    },
+    {
+      "id": "w4v1",
+      "nome": "Elmo na ameia"
+    },
+    {
+      "id": "w4v2",
+      "nome": "Escala de guarda"
+    },
+    {
+      "id": "w4v3",
+      "nome": "Marcas de juramento"
+    },
+    {
+      "id": "w5v1",
+      "nome": "Reflexo atrasado"
+    },
+    {
+      "id": "w5v2",
+      "nome": "Rascunho de um rosto"
+    },
+    {
+      "id": "w6v1",
+      "nome": "Elo de promessa"
+    },
+    {
+      "id": "w6v2",
+      "nome": "Chave do rol"
+    },
+    {
+      "id": "c2v1",
+      "nome": "Mapa rasgado"
+    },
+    {
+      "id": "c2v2",
+      "nome": "Chave do vagão-cela"
+    },
+    {
+      "id": "c2v3",
+      "nome": "Sino de aviso"
+    },
+    {
+      "id": "c2v4",
+      "nome": "Quadro de turnos"
+    },
+    {
+      "id": "c2v5",
+      "nome": "Doação dos libertados"
+    },
+    {
+      "id": "c2v6",
+      "nome": "Placa dos sineiros"
+    },
+    {
+      "id": "c2v7",
+      "nome": "Placa raspada"
+    },
+    {
+      "id": "c2v8",
+      "nome": "Fio do observatório"
+    },
+    {
+      "id": "c2v9",
+      "nome": "Lista dos que ficaram"
+    },
+    {
+      "id": "c2v10",
+      "nome": "Oficina das placas"
+    },
+    {
+      "id": "c2v11",
+      "nome": "Sino sem badalo"
+    },
+    {
+      "id": "env-x1",
+      "nome": "O degrau gasto — Cripta dos Esquecidos"
+    },
+    {
+      "id": "env-x2",
+      "nome": "A vela poupada — Sacrário Proibido"
+    },
+    {
+      "id": "env-x3",
+      "nome": "A marca da tigela — Cela do Último Penitente"
+    },
+    {
+      "id": "env-x4",
+      "nome": "A margem escondida — Arquivo Proibido"
+    },
+    {
+      "id": "env-x5",
+      "nome": "A flor de metal — Criptas dos Treze"
+    },
+    {
+      "id": "env-x6",
+      "nome": "A fivela do juramento — Armaria dos Juramentos"
+    },
+    {
+      "id": "env-x7",
+      "nome": "O reparo da ameia — Ameias da Muralha"
+    },
+    {
+      "id": "env-x8",
+      "nome": "A frase incompleta — Templo do Vazio"
+    }
+  ],
+  "segredos": [
+    {
+      "nome": "Cripta dos Esquecidos",
+      "area": 0
+    },
+    {
+      "nome": "Sacrário Proibido",
+      "area": 2
+    },
+    {
+      "nome": "Cela do Último Penitente",
+      "area": 5
+    }
+  ],
+  "skins": [
+    {
+      "id": "ember",
+      "nome": "Cinzas da Origem"
+    },
+    {
+      "id": "crimson",
+      "nome": "Juramento Carmesim"
+    },
+    {
+      "id": "frost",
+      "nome": "Lamento Glacial"
+    },
+    {
+      "id": "void",
+      "nome": "Abismo Violeta"
+    },
+    {
+      "id": "gold",
+      "nome": "Relicário Solar"
+    },
+    {
+      "id": "venom",
+      "nome": "Peste Esmeralda"
+    },
+    {
+      "id": "ashen",
+      "nome": "Cavaleiro das Cinzas"
+    },
+    {
+      "id": "abyss",
+      "nome": "Devorador de Almas"
+    },
+    {
+      "id": "captain",
+      "nome": "Sentinela da Liberdade"
+    },
+    {
+      "id": "spider",
+      "nome": "HOMEM-ARANHA"
+    },
+    {
+      "id": "hulk",
+      "nome": "HULK — O INDOMÁVEL"
+    }
+  ],
+  "personagens": [
+    {
+      "id": "penitente",
+      "nome": "Penitente"
+    },
+    {
+      "id": "cinzeiro",
+      "nome": "Cinzeiro, o Coveiro"
+    },
+    {
+      "id": "maera",
+      "nome": "Maera, a Alma Cantora"
+    },
+    {
+      "id": "anselmo",
+      "nome": "Irmão Anselmo"
+    },
+    {
+      "id": "talio",
+      "nome": "Tálio, o Mercador de Almas"
+    },
+    {
+      "id": "kravok",
+      "nome": "Kravok, o Carcereiro"
+    },
+    {
+      "id": "zharrak",
+      "nome": "Zharrak, a Fome Sem Fim"
+    },
+    {
+      "id": "devorador",
+      "nome": "O Devorador de Santos"
+    },
+    {
+      "id": "valdreth",
+      "nome": "Valdreth, Comandante dos Ossos"
+    },
+    {
+      "id": "corrompido",
+      "nome": "O Penitente Corrompido"
+    },
+    {
+      "id": "carrasco",
+      "nome": "O Carrasco do Abismo"
+    },
+    {
+      "id": "imperador",
+      "nome": "O Imperador Infernal"
+    },
+    {
+      "id": "voz",
+      "nome": "Narrador"
+    },
+    {
+      "id": "alma",
+      "nome": "Alma Presa"
+    },
+    {
+      "id": "soldado",
+      "nome": "Soldado Caído"
+    },
+    {
+      "id": "odric",
+      "nome": "Odric, o Ferreiro"
+    },
+    {
+      "id": "ilmar",
+      "nome": "Padre Ilmar"
+    },
+    {
+      "id": "orlan",
+      "nome": "Orlan, o Carcereiro"
+    },
+    {
+      "id": "tome",
+      "nome": "Frei Tomé, o Arquivista"
+    },
+    {
+      "id": "lore",
+      "nome": "Fragmento de memória"
+    },
+    {
+      "id": "maldren",
+      "nome": "Maldren, o Leitor de Sentenças"
+    },
+    {
+      "id": "ottilia",
+      "nome": "Madre Ottília"
+    },
+    {
+      "id": "tiago",
+      "nome": "Coroinha Tiago"
+    },
+    {
+      "id": "nicanor",
+      "nome": "Frei Nicanor"
+    },
+    {
+      "id": "brannoch",
+      "nome": "Sargento Brannoch"
+    },
+    {
+      "id": "rennick",
+      "nome": "Cabo Rennick"
+    },
+    {
+      "id": "ysolda",
+      "nome": "Arqueira-Mor Ysolda"
+    },
+    {
+      "id": "corneteiro",
+      "nome": "Corneteiro Dado"
+    },
+    {
+      "id": "monge",
+      "nome": "O Monge Corrompido"
+    },
+    {
+      "id": "primeiro",
+      "nome": "O Primeiro Penitente"
+    },
+    {
+      "id": "maura",
+      "nome": "Maura, a Cartógrafa Cega"
+    },
+    {
+      "id": "ivar",
+      "nome": "Ivar, Guarda da Ordem"
+    },
+    {
+      "id": "crianca",
+      "nome": "Criança de Véspera"
+    },
+    {
+      "id": "marca",
+      "nome": "A voz na marca"
+    },
+    {
+      "id": "sora",
+      "nome": "Sora, Guardiã dos Adormecidos"
+    },
+    {
+      "id": "lio",
+      "nome": "Lio"
+    },
+    {
+      "id": "mira",
+      "nome": "Mira"
+    },
+    {
+      "id": "sacristao",
+      "nome": "Sacristão de Cera"
+    },
+    {
+      "id": "santo",
+      "nome": "O Santo Sob a Cidade"
+    },
+    {
+      "id": "zelador",
+      "nome": "Zelador"
+    },
+    {
+      "id": "silas",
+      "nome": "Silas, Guarda das Celas"
+    },
+    {
+      "id": "marga",
+      "nome": "Velha Marga"
+    },
+    {
+      "id": "basilio",
+      "nome": "Irmão Basílio, Sineiro"
+    },
+    {
+      "id": "dorio",
+      "nome": "Cabo Dório"
+    },
+    {
+      "id": "ennio",
+      "nome": "Ennio, o Retratista"
+    },
+    {
+      "id": "pio",
+      "nome": "Pio, o Escrivão"
+    }
+  ],
+  "npcsAreas": [
+    {
+      "area": "Portões do Submundo",
+      "npcs": [
+        {
+          "id": "cinzeiro",
+          "dialogo": "cinzeiro_0"
+        },
+        {
+          "id": "cinzeiro",
+          "dialogo": "cinzeiro_1"
+        },
+        {
+          "id": "ferido",
+          "dialogo": "ferido_0"
+        },
+        {
+          "id": "cinzeiro",
+          "dialogo": "cinzeiro_2"
+        },
+        {
+          "id": "silas",
+          "dialogo": "w2_silas"
+        }
+      ]
+    },
+    {
+      "area": "Floresta das Almas Perdidas",
+      "npcs": [
+        {
+          "id": "maera",
+          "dialogo": "maera_0"
+        },
+        {
+          "id": "maera",
+          "dialogo": "maera_1"
+        },
+        {
+          "id": "maera",
+          "dialogo": "maera_2"
+        },
+        {
+          "id": "marga",
+          "dialogo": "w2_marga"
+        }
+      ]
+    },
+    {
+      "area": "Catedral dos Santos Devorados",
+      "npcs": [
+        {
+          "id": "anselmo",
+          "dialogo": "anselmo_0"
+        },
+        {
+          "id": "anselmo",
+          "dialogo": "anselmo_1"
+        },
+        {
+          "id": "anselmo",
+          "dialogo": "anselmo_2"
+        },
+        {
+          "id": "anselmo",
+          "dialogo": "anselmo_3"
+        },
+        {
+          "id": "basilio",
+          "dialogo": "w2_basilio"
+        }
+      ]
+    },
+    {
+      "area": "Fortaleza de Ossos",
+      "npcs": [
+        {
+          "id": "dorio",
+          "dialogo": "w2_dorio"
+        }
+      ]
+    },
+    {
+      "area": "Câmara do Espelho Negro",
+      "npcs": [
+        {
+          "id": "ennio",
+          "dialogo": "w2_ennio"
+        }
+      ]
+    },
+    {
+      "area": "Abismo dos Grilhões",
+      "npcs": [
+        {
+          "id": "pio",
+          "dialogo": "w2_pio"
+        }
+      ]
+    }
+  ]
+}
