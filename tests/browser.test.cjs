@@ -274,3 +274,15 @@ test('coyote time e pulo antecipado funcionam sem liberar pulo duplo',async()=>{
   });
   assert.deepEqual(result,{coyote:true,landed:true,buffered:true,secondJumpUnlocked:false});await page.close();
 });
+test('avanço do arpão termina ao bater na parede e continua em caminho livre',async()=>{
+  const page=await newPage();
+  const result=await page.evaluate(()=>{
+    startArea(0,{fresh:true});R.state='play';R.dlg=null;R.E=[];R.PR=[];R.P.act=null;R.P.rooted=0;R.P.hurtT=0;R.P.w=16;R.P.h=38;
+    R.solids=[{x:110,y:GY-50,w:4,h:50}];
+    Object.assign(R.P,{x:100,y:GY,vx:0,vy:0,onGround:true,dash:{dir:1,tx:180,t:.3}});updPlayer(1/60);
+    const wall={x:R.P.x,dash:R.P.dash,vx:R.P.vx};
+    R.solids=[];Object.assign(R.P,{x:100,y:GY,vx:0,vy:0,onGround:true,dash:{dir:1,tx:180,t:.3}});updPlayer(1/60);
+    return {wall,free:{x:R.P.x,dash:!!R.P.dash}};
+  });
+  assert.deepEqual(result.wall,{x:102,dash:null,vx:0});assert.ok(result.free.x>100);assert.equal(result.free.dash,true);await page.close();
+});

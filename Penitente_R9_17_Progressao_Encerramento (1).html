@@ -9182,14 +9182,14 @@ function supportY(x,py,ny,vy){
   return best;
 }
 function physics(b,dt){
-  let nx=b.x+b.vx*dt;
+  let nx=b.x+b.vx*dt,blocked=false;
   for(const s of R.solids){
     if(s.dead||s.cw)continue;
     if(b.y>s.y+1&&b.y-b.h<s.y+s.h){
       // Atravessamentos rápidos do protagonista ainda colidem com a primeira face encontrada.
-      if(b===R.P&&nx>b.x&&b.x+b.w/2<=s.x&&nx+b.w/2>s.x){nx=s.x-b.w/2;b.vx=0}
-      else if(b===R.P&&nx<b.x&&b.x-b.w/2>=s.x+s.w&&nx-b.w/2<s.x+s.w){nx=s.x+s.w+b.w/2;b.vx=0}
-      else if(nx+b.w/2>s.x&&nx-b.w/2<s.x+s.w){nx=b.x<=s.x+s.w/2?s.x-b.w/2:s.x+s.w+b.w/2;b.vx=0}
+      if(b===R.P&&nx>b.x&&b.x+b.w/2<=s.x&&nx+b.w/2>s.x){nx=s.x-b.w/2;b.vx=0;blocked=true}
+      else if(b===R.P&&nx<b.x&&b.x-b.w/2>=s.x+s.w&&nx-b.w/2<s.x+s.w){nx=s.x+s.w+b.w/2;b.vx=0;blocked=true}
+      else if(nx+b.w/2>s.x&&nx-b.w/2<s.x+s.w){nx=b.x<=s.x+s.w/2?s.x-b.w/2:s.x+s.w+b.w/2;b.vx=0;blocked=true}
     }
   }
   b.x=nx;
@@ -9198,7 +9198,7 @@ function physics(b,dt){
   let ny=b.y+b.vy*dt;b.onGround=false;
   if(b===R.P&&R.st.w2)for(const r of R.st.w2.rooms)if(r.low&&b.x>r.x0&&b.x<r.x1){const lim=GY-r.ceil+b.h;if(ny<lim){ny=lim;if(b.vy<0)b.vy=0}}
   if(!b.fly){const sy=supportY(b.x,py,ny,b.vy);if(sy!==Infinity&&ny>=sy){ny=sy;b.vy=0;b.onGround=true}}
-  b.y=ny;
+  b.y=ny;return blocked;
 }
 function bounds(){return R.lock?[R.lock.min+10,R.lock.max-10]:[10,R.st.length-10]}
 
@@ -9715,8 +9715,9 @@ function updPlayer(dt){
     if(ix&&!P.act)P.f=ix;
   }
   const was=P.onGround,wv=R.windF||0;
-  P.vx+=wv;physics(P,dt);P.vx-=wv;
-  const [bmin,bmax]=bounds();P.x=clamp(P.x,bmin,bmax);
+  P.vx+=wv;const blocked=physics(P,dt);P.vx-=wv;
+  const [bmin,bmax]=bounds(),beforeClamp=P.x;P.x=clamp(P.x,bmin,bmax);
+  if(P.dash&&(blocked||P.x!==beforeClamp)){P.dash=null;P.vx=0}
   if(P.onGround){P.jumps=0;P.coyote=.1;if(!was&&P.vy===0){burst(P.x,P.y,4,35,['#aaa'],{life:.3})}
     if(P.y>=GY-1&&!pitAt(P.x-14)&&!pitAt(P.x+14))P.lastSafe=P.x}
   else if(was&&P.vy>=0)P.coyote=.1;
