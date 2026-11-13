@@ -358,3 +358,31 @@ test('pausa cancela os dedos anteriores e não interrompe um novo toque',async()
   assert.equal(await page.evaluate(()=>Object.keys(Input.sources.attack||{}).filter(k=>k.startsWith('touch:')).length),0);
   await page.close();
 });
+test('botão compartilhado preserva pulo iniciado e não duplica comando em diálogo',async()=>{
+  const page=await newPage();
+  const result=await page.evaluate(()=>{
+    startArea(0,{fresh:true});R.state='play';R.dlg=null;R.E=[];R.PR=[];R.paused=false;Input.clear();
+    const buttons=Array.from({length:17},()=>({pressed:false,value:0}));const pad={connected:true,buttons,axes:[0,0]};
+    Object.defineProperty(navigator,'getGamepads',{configurable:true,value:()=>[pad]});Pad.resync();
+    buttons[0].pressed=true;Pad.poll();const jumping=!!Input.down.jump;Input.take('jump');
+    R.near={k:'npc'};Pad.poll();const nearJump=!!Input.down.jump;
+    buttons[0].pressed=false;Pad.poll();Input.press={};buttons[0].pressed=true;Pad.poll();const interaction=Input.take('interact'),nearPress=!!Input.down.jump;
+    buttons[0].pressed=false;Pad.poll();Input.clear();R.near=null;R.state='talk';buttons[0].pressed=true;Pad.poll();
+    const dialogue={interact:Input.take('interact'),jump:!!Input.down.jump,bufferedJump:Input.peek('jump')};
+    return {jumping,nearJump,interaction,nearPress,dialogue};
+  });
+  assert.deepEqual(result,{jumping:true,nearJump:true,interaction:true,nearPress:false,dialogue:{interact:true,jump:false,bufferedJump:false}});await page.close();
+});
+test('atalhos de teclado e pulo remapeado do gamepad funcionam junto a um NPC',async()=>{
+  const page=await newPage();
+  const result=await page.evaluate(()=>{
+    startArea(0,{fresh:true});R.state='play';R.dlg=null;R.E=[];R.PR=[];R.paused=false;Input.clear();
+    const buttons=Array.from({length:17},()=>({pressed:false,value:0}));const pad={connected:true,buttons,axes:[0,0]};
+    Object.defineProperty(navigator,'getGamepads',{configurable:true,value:()=>[pad]});Pad.resync();R.near={k:'npc'};
+    Input.set('jump',true,'key:Space');buttons[0].pressed=true;Pad.poll();const keyboard=!!Input.down.jump;
+    buttons[0].pressed=false;Pad.poll();Input.clear();SAVE.settings.padMap={...PAD_DEFAULT,jump:2};Pad.resync();
+    buttons[2].pressed=true;Pad.poll();const remapped=!!Input.down.jump;
+    return {keyboard,remapped};
+  });
+  assert.deepEqual(result,{keyboard:true,remapped:true});await page.close();
+});

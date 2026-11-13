@@ -1040,7 +1040,7 @@ const Pad={connected:null,prev:[],enabled:true,capture:null,captureArmed:false,l
         if(a==='left'||a==='right'||a==='pause')continue;
         const idx=m[a],hit=this.edge(g,idx),down=this.pressed(g,idx);
         if(a==='interact'){if(hit&&(near||R.state==='talk'))Input.set(a,true,'pad');if(!down)Input.set(a,false,'pad');continue}
-        if(a==='jump'&&m.jump===m.interact&&near){if(!down)Input.set(a,false,'pad');continue}
+        if(a==='jump'&&m.jump===m.interact&&(near||R.state==='talk')){if(R.state==='talk'||!down)Input.set(a,false,'pad');continue}
         if(a==='attack'){if(R.state!=='play'||!down)this.atkHeld=false;else if(hit)this.atkHeld=true;Input.set(a,hit||!!this.atkHeld,'pad')}else{if(hit)Input.set(a,true,'pad');if(!down)Input.set(a,false,'pad')}
       }
     }
