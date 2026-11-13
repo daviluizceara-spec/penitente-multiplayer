@@ -31,4 +31,9 @@ test('duas pessoas entram e somente o anfitrião inicia a partida', async () => 
   const world=event(guest,'world-state');
   host.emit('world-state',{code:room.code,world:{full:true,seq:1,net}});
   assert.deepEqual((await world).net,net);
+  const oldId=guest.id, reconnected=event(guest,'connect'), resync=event(host,'world-resync');
+  guest.io.engine.close();
+  await reconnected;await resync;
+  assert.equal(guest.recovered,true);assert.equal(guest.id,oldId);
+  assert.equal((await ack(third,'join-room',{name:'Terceiro',code:room.code})).ok,false);
 });

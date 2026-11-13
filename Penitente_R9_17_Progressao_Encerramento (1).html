@@ -14297,7 +14297,10 @@ function setDiff(k){SAVE.settings.diff=clamp(+k|0,0,GAME_DIFF.length-1);saveGame
 const SLOTS_KEY='penitente-inferno-eterno-slots-v1',SLOT_N=6;
 let slotCtx='title',slotAsk=null,slotsReadError=false;
 function slotsRead(){
-  try{const raw=localStorage.getItem(SLOTS_KEY),a=raw===null?[]:JSON.parse(raw);if(!Array.isArray(a))throw new Error('Slots inválidos');slotsReadError=false;return Array.from({length:SLOT_N},(_,i)=>a[i]&&a[i].data?a[i]:null)}
+  try{const raw=localStorage.getItem(SLOTS_KEY),a=raw===null?[]:JSON.parse(raw);
+    // Dados desconhecidos não devem ser confundidos com slots vazios e substituídos.
+    if(!Array.isArray(a)||a.some((slot,i)=>slot!=null&&(i>=SLOT_N||typeof slot!=='object'||Array.isArray(slot)||!slot.data||typeof slot.data!=='object'||Array.isArray(slot.data))))throw new Error('Slots inválidos');
+    slotsReadError=false;return Array.from({length:SLOT_N},(_,i)=>a[i]||null)}
   catch(e){slotsReadError=true;return Array(SLOT_N).fill(null)}
 }
 function slotsWrite(a){slotsRead();if(slotsReadError)return false;try{localStorage.setItem(SLOTS_KEY,JSON.stringify(a));return true}catch(e){storageOK=false;return false}}

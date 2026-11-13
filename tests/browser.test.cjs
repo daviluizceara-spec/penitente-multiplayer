@@ -147,3 +147,110 @@ test('pausa abre mapa e permite navegar pelas abas principais do Arsenal',async(
   }
   assert.deepEqual(errors,[]);await page.close();
 });
+test('slots com estrutura desconhecida são preservados',async()=>{
+  for(const raw of ['[{"save_antigo":true}]','[null,null,null,null,null,null,{"data":{"coins":42}}]']){
+    const page=await browser.newPage();
+    await page.addInitScript(value=>localStorage.setItem('penitente-inferno-eterno-slots-v1',value),raw);
+    await page.route('https://cdn.socket.io/**',route=>route.abort());await page.goto(base);
+    await page.locator('[data-act="title-slots"]').click();
+    assert.match(await page.locator('[role="alert"]').innerText(),/dados foram preservados/);
+    assert.equal(await page.evaluate(()=>slotsWrite(Array(6).fill(null))),false);
+    assert.equal(await page.evaluate(()=>localStorage.getItem(SLOTS_KEY)),raw);await page.close();
+  }
+});
+test('dano, morte e retorno ao último ponto',async()=>{
+  const page=await newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.evaluate(()=>{startArea(0,{fresh:true});R.state='play';R.dlg=null;R.P.inv=0;R.P.dinv=0;R.cp.x=210;R.P.x=300;R.P.hp=5});
+  assert.equal(await page.evaluate(()=>hurtPlayer(100,R.P.x-20)),true);
+  assert.deepEqual(await page.evaluate(()=>({dead:R.P.dead,state:R.state})),{dead:true,state:'dead'});
+  await page.evaluate(()=>respawn());
+  const state=await page.evaluate(()=>({dead:R.P.dead,state:R.state,hp:R.P.hp,x:R.P.x}));
+  assert.equal(state.dead,false);assert.equal(state.state,'play');assert.ok(state.hp>0);assert.equal(state.x,210);
+  assert.deepEqual(errors,[]);await page.close();
+});
+test('compra de melhoria, habilidade e equipamento preserva recursos e progresso',async()=>{
+  const page=await newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.evaluate(()=>{SAVE.level=5;SAVE.coins=2000;SAVE.souls=50;startArea(0,{fresh:true});R.state='play';R.dlg=null;R.card=null;R.P.inv=10;Input.clear()});
+  await page.keyboard.press('Escape');await page.locator('[data-act="pause-arsenal"]').click();
+  await page.locator('[data-act="buy-upg"][data-id="hp"]').click();
+  assert.equal(await page.evaluate(()=>SAVE.upg.hp),1);
+  await page.locator('[data-act="tab"][data-id="skills"]').click();
+  await page.locator('[data-act="sk-sel"][data-id="ch1"]').first().click();
+  await page.locator('[data-act="buy-skill"][data-id="ch1"]').click();
+  assert.equal(await page.evaluate(()=>SAVE.skills.ch1),1);
+  await page.locator('[data-act="tab"][data-id="gear"]').click();
+  await page.locator('[data-act="buy-gear"][data-id="s1"]').first().click();
+  assert.equal(await page.evaluate(()=>SAVE.gear.sword),'s1');
+  await page.reload();
+  assert.deepEqual(await page.evaluate(()=>({hp:SAVE.upg.hp,skill:SAVE.skills.ch1,sword:SAVE.gear.sword})),{hp:1,skill:1,sword:'s1'});
+  assert.deepEqual(errors,[]);await page.close();
+});
+test('slot manual recupera o progresso registrado',async()=>{
+  const page=await newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.evaluate(()=>{startArea(0,{fresh:true});R.state='play';R.dlg=null;R.card=null;R.P.inv=10;SAVE.coins=123;SAVE.skills.sp2=1;Input.clear()});
+  await page.keyboard.press('Escape');await page.locator('[data-act="pause-save"]').click();
+  await page.locator('[data-act="slot-save"][data-id="0"]').click();
+  await page.evaluate(()=>{SAVE.coins=1;SAVE.skills.sp2=0;saveGame()});
+  await page.locator('[data-act="slot-load"][data-id="0"]').click();
+  await page.locator('[data-act="slot-yes"][data-id="0"]').click();
+  assert.deepEqual(await page.evaluate(()=>({coins:SAVE.coins,skill:SAVE.skills.sp2,area:SAVE.prog.area})),{coins:123,skill:1,area:0});
+  assert.deepEqual(errors,[]);await page.close();
+});
+test('diálogo cinematográfico pode ser pulado sem deslocar o protagonista',async()=>{
+  const page=await newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
+  const result=await page.evaluate(()=>{
+    startArea(0,{fresh:true});R.state='play';R.dlg=null;R.P.x=550;R.P.y=GY;
+    const before={x:R.P.x,y:R.P.y};
+    const started=startDialog('c2_cinzas',null,{encounterIntro:true,back:'play'});
+    const during={state:R.state,movie:!!R.dlg?.movie};skipDialog();
+    return {started,during,after:{state:R.state,x:R.P.x,y:R.P.y},before};
+  });
+  assert.equal(result.started,true);assert.deepEqual(result.during,{state:'talk',movie:true});
+  assert.deepEqual(result.after,{state:'play',...result.before});assert.deepEqual(errors,[]);await page.close();
+});
+test('troca de área preserva habilidades e equipamentos',async()=>{
+  const page=await newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
+  const result=await page.evaluate(()=>{
+    startArea(0,{fresh:true});SAVE.skills.sp2=1;SAVE.owned.push('s1');SAVE.gear.sword='s1';
+    startArea(1,{fresh:true,cpx:1100});
+    return {area:R.idx,saveArea:SAVE.prog.area,checkpoint:SAVE.prog.cpx,skill:SAVE.skills.sp2,gear:SAVE.gear.sword};
+  });
+  assert.deepEqual(result,{area:1,saveArea:1,checkpoint:1100,skill:1,gear:'s1'});assert.deepEqual(errors,[]);await page.close();
+});
+test('interação com NPC inicia diálogo e devolve controle ao encerrar',async()=>{
+  const page=await newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
+  const result=await page.evaluate(()=>{
+    startArea(0,{fresh:true});R.state='play';R.dlg=null;R.E=[];R.PR=[];R.lock=null;R.P.onGround=true;R.dialogueQuiet=2;
+    const npc=R.npcs.find(n=>n.dlg==='cinzeiro_0');R.P.x=npc.x;const target=interactTarget();
+    doInteract({k:'npc',o:npc});const state=R.state,dialogue=!!R.dlg;skipDialog();
+    return {target:target?.k,state,dialogue,returned:R.state,talked:!!SAVE.prog.talked.cinzeiro_0};
+  });
+  assert.deepEqual(result,{target:'npc',state:'talk',dialogue:true,returned:'play',talked:true});assert.deepEqual(errors,[]);await page.close();
+});
+test('arena inicia o chefe original e a luta após a introdução',async()=>{
+  const page=await newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
+  const result=await page.evaluate(()=>{
+    startArea(0,{fresh:true});R.state='play';R.dlg=null;R.E=[];R.PR=[];R.lock=null;R.P.onGround=true;R.dialogueQuiet=2;
+    startBoss();const intro={state:R.state,type:R.boss?.type,locked:!!R.lock};startFight();
+    return {intro,after:R.state,boss:R.boss?.type};
+  });
+  assert.deepEqual(result,{intro:{state:'cine',type:'b_guard',locked:true},after:'play',boss:'b_guard'});assert.deepEqual(errors,[]);await page.close();
+});
+test('Ressonância gasta carga e mantém o progresso do capítulo',async()=>{
+  const page=await newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
+  const result=await page.evaluate(()=>{
+    SAVE.prog.c2={done:true};c23Start();R.state='play';R.dlg=null;R.paused=false;R.c23.charge=2;R.c23.reveal=0;R.t=10;
+    c23Resonate();return {chapter:R.st.chapter,charge:R.c23.charge,reveal:R.c23.reveal,stored:SAVE.prog.c2e2.charge};
+  });
+  assert.deepEqual(result,{chapter:23,charge:1,reveal:16,stored:1});assert.deepEqual(errors,[]);await page.close();
+});
+test('golpe atinge inimigo no alcance e não repete dano no mesmo ataque',async()=>{
+  const page=await newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
+  const result=await page.evaluate(()=>{
+    startArea(0,{fresh:true});R.state='play';R.dlg=null;R.E=[];R.PR=[];R.P.x=300;R.P.y=GY;R.P.f=1;R.P.onGround=true;
+    const enemy=spawnEnemy('soldier',320,{rise:0,active:true});const before=enemy.hp,hit=new Set();
+    const first=strike('quick',1,hit),after=enemy.hp,second=strike('quick',1,hit);
+    return {before,after,first,second,last:enemy.hp};
+  });
+  assert.equal(result.first,1);assert.ok(result.after<result.before);assert.equal(result.second,0);assert.equal(result.last,result.after);assert.deepEqual(errors,[]);await page.close();
+});

@@ -20,7 +20,7 @@ Base examinada: `Penitente_R9_17_Progressao_Encerramento (1).html`, commit `37c0
 - Duas teclas, ou teclado e mouse, compartilhavam a mesma origem de entrada. Soltar uma podia cancelar outra ainda pressionada. Cada tecla física e botão de mouse agora tem origem independente; fontes touch e controle foram preservadas.
 - As descrições da Couraça de Cinzas e da Armadura Obsidiana anunciavam +30/+60 de vida, mas o cálculo concedia +18/+36. Os textos foram alinhados aos efeitos reais, sem mexer no balanceamento.
 - Save principal ilegível agora é copiado para uma chave de recuperação antes de qualquer substituição. Se a cópia falhar, o salvamento automático fica bloqueado e há aviso na capa. A cópia continua nos dados locais e pode ser baixada em Configurações → Jogo e Dados; ainda não há restauração pela interface.
-- Slots manuais ilegíveis agora exibem aviso e bloqueiam alterações nos dados originais.
+- Slots manuais ilegíveis ou com estrutura inesperada agora exibem aviso e bloqueiam alterações nos dados originais, incluindo dados além do limite conhecido de slots.
 - O comando `npm test` apontava para `test-server.js`, arquivo ausente. A suíte atual executa testes do navegador e uma sessão real do servidor com Socket.IO.
 
 ## Riscos e trabalho pendente
@@ -32,6 +32,6 @@ Base examinada: `Penitente_R9_17_Progressao_Encerramento (1).html`, commit `37c0
 
 ## Verificação executada
 
-`npm test` cobre carregamento da capa e início, combinação de teclas e mouse, um save anterior representativo, pulo/ataque/esquiva, controle simulado após toque, descrições de armaduras, proteção e download do save ilegível, abertura do mapa e navegação pelas abas do Arsenal, além da criação/entrada/início de sala com dois clientes, além da preservação dos metadados de rede. Algumas ações do navegador usam preparação direta de estado para alcançar o trecho testado. O gamepad é simulado; não é um teste físico.
+`npm test` cobre capa e início, combinação de teclas e mouse, save anterior representativo, proteção e download de dados ilegíveis, um salvamento e carregamento de slot manual, pulo/ataque/esquiva, um golpe contra inimigo, dano/morte/renascimento, abertura do mapa e abas do Arsenal, compras de melhoria/habilidade/equipamento, uma interação de NPC, uma cutscene pulada, início de um chefe, uma troca de área e uso de Ressonância. O servidor é testado com dois clientes reais em criação/entrada/início de sala, metadados e recuperação do convidado após queda breve. Alguns cenários são preparados diretamente no estado do jogo para alcançar o trecho testado; o controle é simulado.
 
-Não foram testados integralmente morte/renascimento, chefes, todos os diálogos, cutscenes, regiões e segredos, troca de área, uso completo do mapa, NPCs, compras, desbloqueios da árvore, registros do bestiário, Ressonância, touch real, celulares/APKs, restauração de sessão cooperativa ou desempenho. É necessário percorrer a campanha e testar hardware e rede reais antes de afirmar compatibilidade geral.
+Não foram testados integralmente os padrões dos chefes, todos os diálogos, cutscenes, regiões e segredos, uso completo do mapa, outros NPCs, progressão completa, touch real, celulares/APKs, recuperação do anfitrião, sincronização real entre dois clientes do jogo ou desempenho. É necessário percorrer a campanha e testar hardware e rede reais antes de afirmar compatibilidade geral.
