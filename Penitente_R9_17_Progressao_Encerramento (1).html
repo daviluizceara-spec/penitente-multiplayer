@@ -803,7 +803,7 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',
 
 /* ---------------- Salvamento ---------------- */
 const SAVE_KEY='penitente-inferno-eterno-v1';
-let storageOK=true;
+let storageOK=true, saveWriteBlocked=false, saveRecoveryNotice='';
 const defaultProg=()=>({started:false,area:0,cpx:0,bossDone:{},midDone:{},talked:{},done:false,ng:0,time:0,secrets:{},secretDone:{},sectors:{},sectorDone:{},freedSouls:{}});
 /* dificuldade do jogo: Penitente é o equilíbrio original (padrão) */
 const GAME_DIFF=[
@@ -821,11 +821,11 @@ const defaultSave=()=>({v:2,coins:0,xp:0,level:1,skillPoints:0,souls:0,bestiary:
   settings:{diff:1,master:.8,music:.6,sfx:.8,shake:true,damageNumbers:false,touch:'auto',mute:false,keys:null,tl:{},tscale:1,top:1,padEnabled:true,padMap:null},
   stats:{kills:0,deaths:0,time:0}});
 function loadSave(rawOv){
-  const d=defaultSave();
+  const d=defaultSave();let raw;
   try{
-    if(rawOv===undefined){const t='__t';localStorage.setItem(t,'1');localStorage.removeItem(t)}
-    const raw=rawOv!==undefined?rawOv:localStorage.getItem(SAVE_KEY);
-    if(raw){const o=JSON.parse(raw);
+    raw=rawOv!==undefined?rawOv:localStorage.getItem(SAVE_KEY);
+    if(raw!==null&&raw!==undefined){const o=JSON.parse(raw);
+      if(!o||typeof o!=='object'||Array.isArray(o))throw new Error('Save inválido');
       const out=Object.assign(d,o,{upg:Object.assign(d.upg,o.upg||{}),gear:Object.assign(d.gear,o.gear||{}),
         settings:Object.assign(d.settings,o.settings||{}),stats:Object.assign(d.stats,o.stats||{}),
         skills:o.skills||{},stages:o.stages||{},lore:o.lore||[],owned:o.owned||d.owned});
@@ -834,13 +834,23 @@ function loadSave(rawOv){
         const n=['s1','s2'].filter(k=>out.stages[k]&&out.stages[k].cleared).length;
         out.prog=defaultProg();out.prog.started=out.level>1||out.coins>0||n>0;out.prog.area=n;out.lore=[];out.v=2}
       return out;}
-  }catch(e){storageOK=false}
+  }catch(e){
+    if(rawOv===undefined&&typeof raw==='string'){
+      // Nunca substitua dados ilegíveis sem primeiro guardar uma cópia independente.
+      try{
+        let key=SAVE_KEY+'-recuperacao-'+Date.now(),n=0;
+        while(localStorage.getItem(key)!==null)key=SAVE_KEY+'-recuperacao-'+Date.now()+'-'+(++n);
+        localStorage.setItem(key,raw);
+        saveRecoveryNotice='O progresso anterior não pôde ser lido. Uma cópia foi guardada neste navegador.';
+      }catch(_){saveWriteBlocked=true;storageOK=false;saveRecoveryNotice='Não foi possível ler ou proteger o progresso anterior. O salvamento automático foi pausado.'}
+    }else if(rawOv===undefined){saveWriteBlocked=true;storageOK=false}
+  }
   return d;
 }
 let SAVE=loadSave();
 if(SAVE.skillPoints>0){SAVE.souls=(SAVE.souls||0)+SAVE.skillPoints*10;SAVE.skillPoints=0} /* pontos antigos viram almas */
 if(!SAVE.bestiary||typeof SAVE.bestiary!=='object')SAVE.bestiary={};
-function saveGame(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(SAVE))}catch(e){storageOK=false}}
+function saveGame(){if(saveWriteBlocked)return;try{localStorage.setItem(SAVE_KEY,JSON.stringify(SAVE))}catch(e){storageOK=false}}
 function hasProgress(){return !!SAVE.prog.started}
 /* Marcos de progressão, cada um com seu próprio sinal. prog.done significa "Capítulo 1 concluído"
    (nome mantido por compatibilidade com saves antigos); só prog.campaignFinal marca o término real da campanha. */
@@ -14285,9 +14295,12 @@ function diffPicker(from){
 function setDiff(k){SAVE.settings.diff=clamp(+k|0,0,GAME_DIFF.length-1);saveGame()}
 /* ---------------- Slots de save ---------------- */
 const SLOTS_KEY='penitente-inferno-eterno-slots-v1',SLOT_N=6;
-let slotCtx='title',slotAsk=null;
-function slotsRead(){try{const a=JSON.parse(localStorage.getItem(SLOTS_KEY)||'[]')||[];return Array.from({length:SLOT_N},(_,i)=>a[i]&&a[i].data?a[i]:null)}catch(e){return Array(SLOT_N).fill(null)}}
-function slotsWrite(a){try{localStorage.setItem(SLOTS_KEY,JSON.stringify(a));return true}catch(e){storageOK=false;return false}}
+let slotCtx='title',slotAsk=null,slotsReadError=false;
+function slotsRead(){
+  try{const raw=localStorage.getItem(SLOTS_KEY),a=raw===null?[]:JSON.parse(raw);if(!Array.isArray(a))throw new Error('Slots inválidos');slotsReadError=false;return Array.from({length:SLOT_N},(_,i)=>a[i]&&a[i].data?a[i]:null)}
+  catch(e){slotsReadError=true;return Array(SLOT_N).fill(null)}
+}
+function slotsWrite(a){slotsRead();if(slotsReadError)return false;try{localStorage.setItem(SLOTS_KEY,JSON.stringify(a));return true}catch(e){storageOK=false;return false}}
 function slotsAny(){return slotsRead().some(Boolean)}
 function slotCapture(){
   const d=JSON.parse(JSON.stringify(SAVE));delete d.settings;const P=SAVE.prog;
@@ -14303,6 +14316,7 @@ function slotName(s){
 }
 function slotsHTML(){
   const L=slotsRead(),pause=slotCtx==='pause';
+  if(slotsReadError)return `<h2>Jogos salvos</h2><p role="alert">Não foi possível ler os slots. Os dados foram preservados e não serão substituídos.</p><button class="btn hot" data-act="${pause?'pause-back':'close'}">Voltar</button>`;
   const askMsg=slotAsk?({save:`Substituir o save do slot ${slotAsk.i+1}? O conteúdo anterior será perdido.`,load:'Carregar substitui seu progresso atual. Se quiser guardá-lo, salve em outro slot antes.',del:`Apagar o slot ${slotAsk.i+1}? Não dá para desfazer.`}[slotAsk.a]):'';
   const rows=L.map((s,i)=>{
     const ask=slotAsk&&slotAsk.i===i?slotAsk.a:null;let info,acts='';
@@ -14328,7 +14342,7 @@ function slotsRender(focusAct,i){
 function slotDo(a,i){
   const L=slotsRead();slotAsk=null;
   if(a==='save'){saveGame();L[i]=slotCapture();if(slotsWrite(L)){toast('Jogo salvo no slot '+(i+1));Aud.play('cp')}else{toast('Não foi possível salvar: armazenamento bloqueado');Aud.play('deny')}slotsRender('slot-save',i);return}
-  if(a==='del'){L[i]=null;slotsWrite(L);toast('Slot '+(i+1)+' apagado');slotsRender('slot-load',i);return}
+  if(a==='del'){L[i]=null;if(slotsWrite(L))toast('Slot '+(i+1)+' apagado');else toast('Não foi possível apagar o slot');slotsRender('slot-load',i);return}
   if(a==='load'){const s=L[i];if(!s)return;
     SAVE=loadSave(JSON.stringify(Object.assign({},s.data,{settings:SAVE.settings})));
     SAVE.settings.diff=clamp(s.diff|0,0,GAME_DIFF.length-1);saveGame();Aud.applyVol();closeModal();
@@ -14365,7 +14379,7 @@ function renderTitleScreen(){
       <div class="title-menu">
         <button class="btn hot title-primary" data-act="${has?'continue':'new-start'}"><span class="title-btn-icon">${has?'▶':'✦'}</span><span>${has?'Continuar jornada':'Iniciar jornada'}</span><small>${has?'Retomar do último ponto salvo':'Começar uma nova aventura'}</small><b>›</b></button>
         <div class="title-action-grid">
-          ${slotsAny()?'<button class="btn title-action" data-act="title-slots"><span>▤</span><b>Carregar jogo</b><small>Escolher um dos saves</small></button>':''}
+          ${(slotsAny()||slotsReadError)?'<button class="btn title-action" data-act="title-slots"><span>▤</span><b>Carregar jogo</b><small>Escolher um dos saves</small></button>':''}
           ${has?'<button class="btn title-action" data-act="arsenal-title"><span>⚒</span><b>Arsenal</b><small>Equipamentos e habilidades</small></button>':''}
           ${has?'<button class="btn title-action" data-act="new-game"><span>↻</span><b>Nova jornada</b><small>Recomeçar do início</small></button>':''}
           ${finished?'<button class="btn title-action" data-act="ng-plus"><span>✦</span><b>New Game +</b><small>Uma provação mais difícil</small></button>':''}
@@ -14376,6 +14390,7 @@ function renderTitleScreen(){
         </div>
       </div>
       <div class="title-difficulty">${diffPicker('title')}</div>
+      ${saveRecoveryNotice?`<p class="tiny" role="alert">${esc(saveRecoveryNotice)}</p>`:''}
       <footer class="title-console-foot"><span>${storageOK?'◆ Progresso salvo neste aparelho':'! Armazenamento indisponível'}</span><span>VERSÃO INFERNO ETERNO</span></footer>
     </aside>
   </div>`;

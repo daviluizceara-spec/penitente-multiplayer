@@ -86,3 +86,36 @@ test('descrições das armaduras correspondem ao bônus de vida aplicado',async(
   assert.deepEqual(result,[{description:'+18 de vida e 6% de redução de dano.',bonus:18},{description:'+36 de vida e 12% de redução de dano.',bonus:36}]);
   await page.close();
 });
+test('progresso ilegível é preservado antes de um novo salvamento',async()=>{
+  const page=await browser.newPage();
+  const raw='{progresso interrompido';
+  await page.addInitScript(value=>localStorage.setItem('penitente-inferno-eterno-v1',value),raw);
+  await page.route('https://cdn.socket.io/**',route=>route.abort());await page.goto(base);
+  assert.match(await page.locator('[role="alert"]').innerText(),/cópia foi guardada/);
+  await page.evaluate(()=>{SAVE.coins=12;saveGame()});
+  const result=await page.evaluate(()=>({saved:JSON.parse(localStorage.getItem(SAVE_KEY)).coins,backups:Object.keys(localStorage).filter(k=>k.startsWith(SAVE_KEY+'-recuperacao-')).map(k=>localStorage.getItem(k))}));
+  assert.equal(result.saved,12);assert.deepEqual(result.backups,[raw]);await page.close();
+});
+test('se a cópia de segurança falhar, o progresso original não é sobrescrito',async()=>{
+  const page=await browser.newPage();
+  const raw='{progresso interrompido';
+  await page.addInitScript(value=>{
+    localStorage.setItem('penitente-inferno-eterno-v1',value);
+    const original=Storage.prototype.setItem;
+    Storage.prototype.setItem=function(k,v){if(k.includes('-recuperacao-'))throw new Error('sem espaço');return original.call(this,k,v)};
+  },raw);
+  await page.route('https://cdn.socket.io/**',route=>route.abort());await page.goto(base);
+  assert.match(await page.locator('[role="alert"]').innerText(),/salvamento automático foi pausado/);
+  await page.evaluate(()=>{SAVE.coins=12;saveGame()});
+  assert.equal(await page.evaluate(()=>localStorage.getItem(SAVE_KEY)),raw);await page.close();
+});
+test('slots ilegíveis não são exibidos como vazios nem sobrescritos',async()=>{
+  const page=await browser.newPage();const raw='{slots incompletos';
+  await page.addInitScript(value=>localStorage.setItem('penitente-inferno-eterno-slots-v1',value),raw);
+  await page.route('https://cdn.socket.io/**',route=>route.abort());await page.goto(base);
+  await page.locator('[data-act="title-slots"]').click();
+  assert.match(await page.locator('[role="alert"]').innerText(),/dados foram preservados/);
+  assert.equal(await page.evaluate(()=>slotsWrite(Array(6).fill(null))),false);
+  assert.equal(await page.evaluate(()=>localStorage.getItem(SLOTS_KEY)),raw);
+  await page.close();
+});
