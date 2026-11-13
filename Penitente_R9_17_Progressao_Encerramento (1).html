@@ -9446,10 +9446,11 @@ function startQuick(){
   P.vx=P.f*(n===3?120:80);Aud.play('slash',1+n*.1);
 }
 function enemyTargetable(e){return e.active||((e.roaming||e.localEncounter)&&Math.abs(e.x-R.P.x)<340)}
-function nearestFoe(r,vertical=null){
+function chainTargetable(e){return e.active&&!e.dead&&e.rise<=0&&!(e.type==='assassin'&&e.st==='hide')&&(e.fade===undefined||e.fade>.6)}
+function nearestFoe(r,vertical=null,filter=null){
   const P=R.P;let b=null,bd=r;
   for(const e of R.E){
-    if(!enemyTargetable(e)||e.dead||e.rise>0)continue;
+    if(!enemyTargetable(e)||e.dead||e.rise>0||(filter&&!filter(e)))continue;
     if(vertical){const box=eRect(e);if(box.y>=P.y+vertical[1]||box.y+box.h<=P.y-vertical[0])continue}
     const d=Math.abs(e.x-P.x);if(d<bd){bd=d;b=e}
   }
@@ -9494,7 +9495,7 @@ function startHeavy(){
 function startChain(){
   const P=R.P,S=R.S,spider=SAVE.gear.skin==='spider';
   P.act={k:'chain',t:0,dur:.5,done:false,tip:0,tx:null,spider};
-  const tgt=nearestFoe(spider?Math.max(S.range,220):S.range,spider?null:[52,8]);if(!(Input.down.left||Input.down.right)&&tgt)P.f=sgn(tgt.x-P.x);
+  const tgt=nearestFoe(spider?Math.max(S.range,220):S.range,spider?null:[52,8],spider?null:chainTargetable);if(!(Input.down.left||Input.down.right)&&tgt)P.f=sgn(tgt.x-P.x);
   P.vx=spider?P.f*18:0;Aud.play('chain');
 }
 function spawnWebShot(x,y,vx,vy,dmg,webTime=1.8){
@@ -9531,7 +9532,7 @@ function resolveChain(a){
   const P=R.P,S=R.S,f=P.f,range=S.range;
   if(a.spider){resolveSpiderWeb(a);return;}
   const box={x:f>0?P.x:P.x-range,y:P.y-52,w:range,h:60};
-  let ts=R.E.filter(e=>e.active&&!e.dead&&e.rise<=0&&!(e.type==='assassin'&&e.st==='hide')&&(e.fade===undefined||e.fade>.6)&&ov(box,eRect(e))).sort((x,y)=>Math.abs(x.x-P.x)-Math.abs(y.x-P.x));
+  let ts=R.E.filter(e=>chainTargetable(e)&&ov(box,eRect(e))).sort((x,y)=>Math.abs(x.x-P.x)-Math.abs(y.x-P.x));
   ts=ts.slice(0,S.has('ch3')?3:1);
   a.done=true;
   if(!ts.length){P.cdChain=.9*S.cdMul;a.tip=range;return}

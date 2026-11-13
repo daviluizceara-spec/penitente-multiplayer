@@ -466,3 +466,15 @@ test('direção manual e alvo aéreo do golpe continuam funcionando',async()=>{
   });
   assert.deepEqual(result,{manual:-1,airborne:1});await page.close();
 });
+test('arpão não mira automaticamente em inimigos que não pode puxar',async()=>{
+  const page=await newPage();
+  const result=await page.evaluate(()=>{
+    startArea(0,{fresh:true});R.state='play';R.dlg=null;R.E=[];R.PR=[];Input.clear();Object.assign(R.P,{x:300,y:GY,f:-1,onGround:true});
+    const asleep=spawnEnemy('soldier',290,{rise:0,active:false});asleep.roaming=true;
+    const hidden=spawnEnemy('assassin',285,{rise:0,active:true});hidden.st='hide';
+    const faded=spawnEnemy('soldier',280,{rise:0,active:true});faded.fade=.2;
+    const reachable=spawnEnemy('soldier',330,{rise:0,active:true});
+    const before=reachable.hp;startChain();resolveChain(R.P.act);return {facing:R.P.f,hit:reachable.hp<before};
+  });
+  assert.deepEqual(result,{facing:1,hit:true});await page.close();
+});
