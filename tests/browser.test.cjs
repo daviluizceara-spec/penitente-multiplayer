@@ -305,3 +305,29 @@ test('soltar pulo reduz a subida mesmo durante golpe rápido no ar',async()=>{
   });
   assert.ok(result.released>result.held);assert.ok(result.released<0);await page.close();
 });
+test('pulo antecipado próximo ao chão preserva o pulo duplo desbloqueado',async()=>{
+  const page=await newPage();
+  const result=await page.evaluate(()=>{
+    SAVE.skills.sp2=1;startArea(0,{fresh:true});R.state='play';R.dlg=null;R.E=[];R.PR=[];R.P.hurtT=0;R.P.rooted=0;R.st.plats=[];R.st.pits=[];
+    const P=R.P;
+    function setup(y,vy){Input.clear();Object.assign(P,{x:400,y,vy,vx:0,onGround:false,coyote:0,jumps:1,act:null});Input.set('jump',true,'test')}
+    setup(GY-8,120);let near;for(let i=0;i<8;i++){Input.t+=1/60;updPlayer(1/60);if(P.vy<0){near={jumps:P.jumps,vy:P.vy};break}}
+    setup(GY-80,120);Input.t+=1/60;updPlayer(1/60);const midair={jumps:P.jumps,vy:P.vy};
+    R.st.pits=[[380,80]];setup(GY-8,120);Input.t+=1/60;updPlayer(1/60);const pit={jumps:P.jumps,vy:P.vy};
+    return {near,midair,pit};
+  });
+  assert.equal(result.near.jumps,1);assert.ok(result.near.vy<0);
+  assert.equal(result.midair.jumps,2);assert.ok(result.midair.vy<0);
+  assert.equal(result.pit.jumps,2);assert.ok(result.pit.vy<0);await page.close();
+});
+test('toques simultâneos de pulo e golpe permanecem independentes',async()=>{
+  const page=await newPage();
+  await page.evaluate(()=>{startArea(0,{fresh:true});R.state='play';R.dlg=null;R.paused=false;Input.clear()});
+  await page.locator('#touch [data-a="jump"]').dispatchEvent('pointerdown',{pointerType:'touch',pointerId:21});
+  await page.locator('#touch [data-a="attack"]').dispatchEvent('pointerdown',{pointerType:'touch',pointerId:22});
+  assert.deepEqual(await page.evaluate(()=>({jump:Input.down.jump,attack:Input.down.attack})),{jump:true,attack:true});
+  await page.locator('#touch [data-a="jump"]').dispatchEvent('pointerup',{pointerType:'touch',pointerId:21});
+  assert.deepEqual(await page.evaluate(()=>({jump:Input.down.jump,attack:Input.down.attack})),{jump:false,attack:true});
+  await page.locator('#touch [data-a="attack"]').dispatchEvent('pointerup',{pointerType:'touch',pointerId:22});
+  assert.equal(await page.evaluate(()=>Input.down.attack),false);await page.close();
+});
