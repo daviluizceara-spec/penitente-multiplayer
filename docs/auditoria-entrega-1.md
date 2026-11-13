@@ -18,6 +18,7 @@ Base examinada: `Penitente_R9_17_Progressao_Encerramento (1).html`, commit `37c0
 ## Problemas confirmados e correções
 
 - Duas teclas, ou teclado e mouse, compartilhavam a mesma origem de entrada. Soltar uma podia cancelar outra ainda pressionada. Cada tecla física e botão de mouse agora tem origem independente; fontes touch e controle foram preservadas.
+- A navegação de abas pelo gamepad agora inclui Visuais, preservando a ordem exibida no Arsenal. A câmera limita o enquadramento ao cenário e interpola a entrada em arenas.
 - Controles touch agora rastreiam cada dedo: soltar um toque não cancela outro no mesmo botão, e o direcional volta ao toque anterior ainda ativo. Ao limpar os comandos, os estados visuais e ponteiros também são limpos.
 - As descrições da Couraça de Cinzas e da Armadura Obsidiana anunciavam +30/+60 de vida, mas o cálculo concedia +18/+36. Os textos foram alinhados aos efeitos reais, sem mexer no balanceamento.
 - Save principal ilegível agora é copiado para uma chave de recuperação antes de qualquer substituição. Se a cópia falhar, o salvamento automático fica bloqueado e há aviso na capa. A cópia continua nos dados locais e pode ser baixada em Configurações → Jogo e Dados; ainda não há restauração pela interface.

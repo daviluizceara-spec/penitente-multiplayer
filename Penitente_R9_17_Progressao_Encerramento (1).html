@@ -989,7 +989,7 @@ let hudInput='keyboard';
 window.addEventListener('keydown',e=>{if(!e.repeat&&!/^(INPUT|TEXTAREA|SELECT)$/.test(e.target?.tagName||''))hudInput='keyboard'});
 window.addEventListener('pointerdown',e=>{if(e.pointerType==='touch')hudInput='touch';else if(e.pointerType==='mouse')hudInput='keyboard'},{passive:true});
 let padStatusTimer=null;
-const HUB_TABS=['map','shop','skills','gear','lore','best','opts'];
+const HUB_TABS=['map','shop','skills','gear','skins','lore','best','opts'];
 const Pad={connected:null,prev:[],enabled:true,capture:null,captureArmed:false,lastNav:0,navAxis:0,
   map(){let m=SAVE.settings.padMap;if(!m||typeof m!=='object')m=SAVE.settings.padMap={...PAD_DEFAULT};for(const [a,,d] of PAD_ACTIONS)if(!Number.isInteger(m[a])||m[a]<0||m[a]>31)m[a]=d;return m},
   name(i){return PAD_NAMES[i]||('Botão '+(i+1))},glyph(i){return PAD_GLYPHS[i]||('Botão '+(i+1))},usable(){return !!this.connected&&SAVE.settings.padEnabled!==false},
@@ -16292,12 +16292,15 @@ UI.addEventListener('change',ev=>{
 let last=performance.now(),acc=0;
 
 function updCam(dt){
-  let minC=0,maxC=R.st.length-W;
-  if(R.lock){minC=R.lock.min;maxC=R.lock.max-W}
+  const worldMax=Math.max(0,R.st.length-W);let minC=0,maxC=worldMax;
+  if(R.lock){
+    if(R.lock.max-R.lock.min<W){minC=maxC=clamp((R.lock.min+R.lock.max-W)/2,0,worldMax)}
+    else{minC=clamp(R.lock.min,0,worldMax);maxC=clamp(R.lock.max-W,0,worldMax)}
+  }
   let tx=R.P.x+R.P.f*26-W/2;
   if(R.state==='cine'&&R.boss)tx=R.boss.x-W/2-30;
   R.cam+=(clamp(tx,minC,maxC)-R.cam)*Math.min(1,dt*(R.state==='cine'?3:7));
-  R.cam=clamp(R.cam,minC,maxC);
+  R.cam=clamp(R.cam,0,worldMax);
 }
 function update(dt){
   if(mpBlocked()) {Input.clear();return}

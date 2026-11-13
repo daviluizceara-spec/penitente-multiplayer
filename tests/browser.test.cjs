@@ -386,3 +386,59 @@ test('atalhos de teclado e pulo remapeado do gamepad funcionam junto a um NPC',a
   });
   assert.deepEqual(result,{keyboard:true,remapped:true});await page.close();
 });
+test('câmera respeita limites do cenário e enquadra arenas menores que a tela',async()=>{
+  const page=await newPage();
+  const result=await page.evaluate(()=>{
+    startArea(0,{fresh:true});R.state='play';R.dlg=null;R.st.length=1000;R.P.f=1;
+    function cam(lock,x){R.lock=lock;R.cam=0;R.P.x=x;updCam(1);return R.cam}
+    return {short:cam({min:650,max:750},700),edge:cam({min:-30,max:300},80),right:cam({min:900,max:1300},950),normal:cam({min:200,max:900},850),world:cam(null,1000)};
+  });
+  assert.deepEqual(result,{short:460,edge:0,right:520,normal:420,world:520});await page.close();
+});
+test('entrada em arena movimenta câmera suavemente sem sair do cenário',async()=>{
+  const page=await newPage();
+  const result=await page.evaluate(()=>{
+    startArea(0,{fresh:true});R.state='play';R.dlg=null;R.st.length=1000;R.P.x=400;R.P.f=1;R.cam=0;R.lock={min:200,max:900};
+    updCam(1/60);return R.cam;
+  });
+  assert.ok(result>0&&result<200);await page.close();
+});
+test('áreas principais e desvios iniciais carregam e renderizam',async()=>{
+  const page=await newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
+  for(let i=0;i<6;i++){
+    const area=await page.evaluate(i=>{startArea(i,{fresh:true,cpx:80});return {id:R.st.id,expected:STAGES[i].id,player:Number.isFinite(R.P.x)}},i);
+    assert.equal(area.id,area.expected);assert.equal(area.player,true);await page.waitForTimeout(80);
+  }
+  for(let i=0;i<3;i++){
+    const area=await page.evaluate(i=>{startArea(SECRET_DEFS[i].parent,{fresh:true,secret:i});return {id:R.st.id,expected:SECRETS[i].id,player:Number.isFinite(R.P.x)}},i);
+    assert.equal(area.id,area.expected);assert.equal(area.player,true);await page.waitForTimeout(80);
+  }
+  assert.deepEqual(errors,[]);await page.close();
+});
+test('áreas posteriores da campanha carregam preservando os requisitos de progresso',async()=>{
+  const page=await newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
+  const chapters=[];
+  for(let i=0;i<4;i++){
+    chapters.push(await page.evaluate(i=>{
+      if(i===0)c2Start();
+      if(i===1){SAVE.prog.c2.done=true;c23Start()}
+      if(i===2){SAVE.prog.c2e2.done=true;c24Start()}
+      if(i===3){SAVE.prog.c2e3.done=true;c25Start()}
+      return R.st.chapter;
+    },i));
+    await page.waitForTimeout(150);
+  }
+  assert.deepEqual(chapters,[2,23,24,25]);assert.deepEqual(errors,[]);await page.close();
+});
+test('navegação por gamepad alcança os visuais entre equipamento e memórias',async()=>{
+  const page=await newPage();
+  const result=await page.evaluate(()=>{
+    startArea(0,{fresh:true});R.state='play';R.dlg=null;openArsenal('gear');
+    const buttons=Array.from({length:17},()=>({pressed:false,value:0}));const pad={connected:true,buttons,axes:[0,0]};
+    Object.defineProperty(navigator,'getGamepads',{configurable:true,value:()=>[pad]});Pad.resync();
+    buttons[5].pressed=true;Pad.poll();const first=hubTab;
+    buttons[5].pressed=false;Pad.poll();buttons[5].pressed=true;Pad.poll();const second=hubTab;
+    return {first,second};
+  });
+  assert.deepEqual(result,{first:'skins',second:'lore'});await page.close();
+});
