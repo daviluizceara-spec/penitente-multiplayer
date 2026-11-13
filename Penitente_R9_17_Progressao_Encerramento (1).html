@@ -9174,15 +9174,17 @@ function comboHit(){
 }
 
 /* ---------- física ---------- */
-function supportY(x,py,ny,vy){
+function supportY(x,py,ny,vy,fromX=x){
   let best=Infinity;
-  if(vy>=0){for(const p of R.st.plats){const top=GY-p[1];if(x>=p[0]&&x<=p[0]+p[2]&&py<=top+2&&ny>=top)best=Math.min(best,top)}}
-  if(vy>=0&&R.st.vp)for(const p of R.st.vp){if(!vpSolid(p))continue;const top=GY-p[1];if(x>=p[0]&&x<=p[0]+p[2]&&py<=top+2&&ny>=top)best=Math.min(best,top)}
+  // Uma plataforma só sustenta se os pés já estiverem sobre ela ao cruzar sua altura.
+  const over=(p,top)=>{const at=ny===py?x:lerp(fromX,x,clamp((top-py)/(ny-py),0,1));return x>=p[0]&&x<=p[0]+p[2]&&at>=p[0]&&at<=p[0]+p[2]};
+  if(vy>=0){for(const p of R.st.plats){const top=GY-p[1];if(py<=top+2&&ny>=top&&over(p,top))best=Math.min(best,top)}}
+  if(vy>=0&&R.st.vp)for(const p of R.st.vp){if(!vpSolid(p))continue;const top=GY-p[1];if(py<=top+2&&ny>=top&&over(p,top))best=Math.min(best,top)}
   if(!pitAt(x)&&py<=GY+2&&ny>=GY)best=Math.min(best,GY);
   return best;
 }
 function physics(b,dt){
-  let nx=b.x+b.vx*dt,blocked=false;
+  const oldX=b.x;let nx=b.x+b.vx*dt,blocked=false;
   for(const s of R.solids){
     if(s.dead||s.cw)continue;
     if(b.y>s.y+1&&b.y-b.h<s.y+s.h){
@@ -9197,7 +9199,7 @@ function physics(b,dt){
   if(!b.fly)b.vy=Math.min(b.vy+900*dt,460);
   let ny=b.y+b.vy*dt;b.onGround=false;
   if(b===R.P&&R.st.w2)for(const r of R.st.w2.rooms)if(r.low&&b.x>r.x0&&b.x<r.x1){const lim=GY-r.ceil+b.h;if(ny<lim){ny=lim;if(b.vy<0)b.vy=0}}
-  if(!b.fly){const sy=supportY(b.x,py,ny,b.vy);if(sy!==Infinity&&ny>=sy){ny=sy;b.vy=0;b.onGround=true}}
+  if(!b.fly){const sy=supportY(b.x,py,ny,b.vy,b===R.P?oldX:b.x);if(sy!==Infinity&&ny>=sy){ny=sy;b.vy=0;b.onGround=true}}
   b.y=ny;return blocked;
 }
 function bounds(){return R.lock?[R.lock.min+10,R.lock.max-10]:[10,R.st.length-10]}
@@ -9656,7 +9658,7 @@ function updPlayer(dt){
       if(P.onGround||P.coyote>0){Input.take('jump');P.vy=-305;P.jumps=1;P.coyote=0;P.onGround=false;burst(P.x,P.y,5,40,['#aaa'],{life:.4});}
       else if(S.has('sp2')&&P.jumps<2){Input.take('jump');P.vy=-285;P.jumps=2;burst(P.x,P.y-4,12,70,['#9ff0ff','#fff'],{add:1,life:.5});ring(P.x,P.y-2,14,'120,230,255',.3)}
     }
-    if(!Input.down.jump&&P.vy<-130&&!P.act)P.vy*=.86;
+    if(!Input.down.jump&&P.vy<-130&&(!P.act||P.act.k==='quick'))P.vy*=.86;
   }
   // ações em andamento
   const A=P.act;

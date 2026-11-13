@@ -286,3 +286,22 @@ test('avanço do arpão termina ao bater na parede e continua em caminho livre',
   });
   assert.deepEqual(result.wall,{x:102,dash:null,vx:0});assert.ok(result.free.x>100);assert.equal(result.free.dash,true);await page.close();
 });
+test('queda lateral não prende o personagem em cima de plataforma já ultrapassada',async()=>{
+  const page=await newPage();
+  const result=await page.evaluate(()=>{
+    startArea(0,{fresh:true});R.state='play';R.dlg=null;R.solids=[];R.st.plats=[[100,80,40]];R.st.vp=[];
+    const top=GY-80;
+    function move(x,y,vx,vy){Object.assign(R.P,{x,y,vx,vy,onGround:false});physics(R.P,1/60);return {x:R.P.x,y:R.P.y,ground:R.P.onGround}}
+    return {top,side:move(95,top-1,420,450),land:move(110,top-2,0,180)};
+  });
+  assert.equal(result.side.ground,false);assert.ok(result.side.y>result.top);assert.equal(result.land.y,result.top);assert.equal(result.land.ground,true);await page.close();
+});
+test('soltar pulo reduz a subida mesmo durante golpe rápido no ar',async()=>{
+  const page=await newPage();
+  const result=await page.evaluate(()=>{
+    startArea(0,{fresh:true});R.state='play';R.dlg=null;R.E=[];R.PR=[];R.P.rooted=0;R.P.hurtT=0;
+    function run(held){Input.clear();Object.assign(R.P,{x:500,y:GY-50,vy:-250,vx:0,onGround:false,act:{k:'quick',t:0,dur:1,n:1,set:new Set()}});Input.set('jump',held,'test');updPlayer(1/60);return R.P.vy}
+    return {released:run(false),held:run(true)};
+  });
+  assert.ok(result.released>result.held);assert.ok(result.released<0);await page.close();
+});
