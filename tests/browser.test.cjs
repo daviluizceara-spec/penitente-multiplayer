@@ -442,3 +442,27 @@ test('navegação por gamepad alcança os visuais entre equipamento e memórias'
   });
   assert.deepEqual(result,{first:'skins',second:'lore'});await page.close();
 });
+test('ataques automáticos não viram para inimigo fora da altura do golpe',async()=>{
+  const page=await newPage();
+  const result=await page.evaluate(()=>{
+    startArea(0,{fresh:true});R.state='play';R.dlg=null;R.E=[];R.PR=[];Input.clear();
+    Object.assign(R.P,{x:300,y:GY,f:1,onGround:true,act:null});
+    const high=spawnEnemy('soldier',290,{rise:0,active:true});high.y=GY-120;
+    const near=spawnEnemy('soldier',330,{rise:0,active:true});near.y=GY;
+    function facing(fn){R.P.f=-1;R.P.act=null;fn();return R.P.f}
+    return {quick:facing(startQuick),heavy:facing(startHeavy),chain:facing(startChain)};
+  });
+  assert.deepEqual(result,{quick:1,heavy:1,chain:1});await page.close();
+});
+test('direção manual e alvo aéreo do golpe continuam funcionando',async()=>{
+  const page=await newPage();
+  const result=await page.evaluate(()=>{
+    startArea(0,{fresh:true});R.state='play';R.dlg=null;R.E=[];R.PR=[];Input.clear();
+    Object.assign(R.P,{x:300,y:GY,f:-1,onGround:true,act:null});
+    const enemy=spawnEnemy('soldier',330,{rise:0,active:true});enemy.y=GY;
+    Input.set('left',true,'test');startQuick();const manual=R.P.f;Input.clear();
+    R.P.y=GY-110;enemy.y=GY-110;R.P.f=-1;R.P.act=null;startQuick();const airborne=R.P.f;
+    return {manual,airborne};
+  });
+  assert.deepEqual(result,{manual:-1,airborne:1});await page.close();
+});

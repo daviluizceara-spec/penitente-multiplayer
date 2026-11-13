@@ -9441,14 +9441,18 @@ function startQuick(){
   const n=P.comboWin>0?(P.comboN%3)+1:1;P.comboN=n;
   const dur=(n===3?.42:.31);
   P.act={k:'quick',n,t:0,dur,hit:false,q:false,set:new Set()};
-  const tgt=nearestFoe(70);
+  const tgt=nearestFoe(70,[50,-2]);
   if(!(Input.down.left||Input.down.right)&&tgt)P.f=sgn(tgt.x-P.x);
   P.vx=P.f*(n===3?120:80);Aud.play('slash',1+n*.1);
 }
 function enemyTargetable(e){return e.active||((e.roaming||e.localEncounter)&&Math.abs(e.x-R.P.x)<340)}
-function nearestFoe(r){
+function nearestFoe(r,vertical=null){
   const P=R.P;let b=null,bd=r;
-  for(const e of R.E){if(!enemyTargetable(e)||e.dead||e.rise>0)continue;const d=Math.abs(e.x-P.x);if(d<bd){bd=d;b=e}}
+  for(const e of R.E){
+    if(!enemyTargetable(e)||e.dead||e.rise>0)continue;
+    if(vertical){const box=eRect(e);if(box.y>=P.y+vertical[1]||box.y+box.h<=P.y-vertical[0])continue}
+    const d=Math.abs(e.x-P.x);if(d<bd){bd=d;b=e}
+  }
   return b;
 }
 function strike(kind,n,set){
@@ -9484,13 +9488,13 @@ function hitWall(s,d){
 }
 function startHeavy(){
   const P=R.P;P.act={k:'heavy',t:0,dur:.68,hit:false,set:new Set()};
-  const tgt=nearestFoe(80);if(!(Input.down.left||Input.down.right)&&tgt)P.f=sgn(tgt.x-P.x);
+  const tgt=nearestFoe(80,[60,-2]);if(!(Input.down.left||Input.down.right)&&tgt)P.f=sgn(tgt.x-P.x);
   P.vx=P.f*30;Aud.play('charge');
 }
 function startChain(){
   const P=R.P,S=R.S,spider=SAVE.gear.skin==='spider';
   P.act={k:'chain',t:0,dur:.5,done:false,tip:0,tx:null,spider};
-  const tgt=nearestFoe(spider?Math.max(S.range,220):S.range);if(!(Input.down.left||Input.down.right)&&tgt)P.f=sgn(tgt.x-P.x);
+  const tgt=nearestFoe(spider?Math.max(S.range,220):S.range,spider?null:[52,8]);if(!(Input.down.left||Input.down.right)&&tgt)P.f=sgn(tgt.x-P.x);
   P.vx=spider?P.f*18:0;Aud.play('chain');
 }
 function spawnWebShot(x,y,vx,vy,dmg,webTime=1.8){

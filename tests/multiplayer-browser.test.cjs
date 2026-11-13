@@ -27,6 +27,15 @@ test('dois navegadores do jogo criam sala e concluem a sincronização cooperati
     await Promise.all([host.waitForFunction(()=>NET.active&&!mpBlocked(),null,{timeout:10000}),guest.waitForFunction(()=>NET.active&&MP.worldReady&&!NET.sync&&!mpBlocked(),null,{timeout:10000})]);
     assert.equal(await host.evaluate(()=>scene),'play');assert.equal(await guest.evaluate(()=>scene),'play');
     assert.equal(await guest.evaluate(()=>R.idx),await host.evaluate(()=>R.idx));
+    const enemy=await host.evaluate(()=>{
+      R.state='play';R.dlg=null;R.card=null;R.E=[];R.P.x=200;R.P.inv=10;
+      const e=spawnEnemy('soldier',280,{rise:0,active:true});e.stun=10;MP.needFull=true;MP.lastWorld=0;
+      return {id:e.netId,hp:e.hp};
+    });
+    await guest.waitForFunction(id=>R.E.some(e=>e.netId===id),enemy.id,{timeout:5000});
+    await guest.evaluate(()=>{R.state='play';R.dlg=null;R.P.x=250;R.P.y=GY;R.P.f=1;R.P.inv=10;Input.clear()});
+    await guest.keyboard.down('KeyJ');await guest.waitForTimeout(120);await guest.keyboard.up('KeyJ');
+    await host.waitForFunction(data=>{const e=R.E.find(q=>q.netId===data.id);return e&&e.hp<data.hp},enemy,{timeout:5000});
     const guestId=await guest.evaluate(()=>MP.socket.id);
     await guest.evaluate(()=>{MP.socket.io.engine.close()});
     await guest.waitForFunction(()=>NET.recover,null,{timeout:5000});
