@@ -1,3 +1,7 @@
+> **Nota sobre este repositório:** o HTML disponível atualmente é `Penitente_R9_17_Progressao_Encerramento (1).html`. O texto abaixo registra uma entrega anterior do servidor e cita um HTML e testes históricos que não estão aqui. Para a auditoria e os limites da versão atual, veja [docs/auditoria-entrega-1.md](docs/auditoria-entrega-1.md).
+>
+> Para executar os testes atuais, use `npm ci` e `npm test`. Os testes de navegador requerem Chromium em `/usr/bin/chromium`; use `CHROMIUM_PATH=/caminho/para/chromium npm test` se necessário. Não é preciso instalar um navegador para executar o jogo.
+
 # Penitente — servidor V7 / cliente R9.1
 
 Este pacote corrige o erro “A sincronização chegou sem state.net”. No servidor anterior, `cleanPlayerState` e `cleanWorld` descartavam os campos `net` enviados pelo HTML. Os campos agora são retransmitidos completos, com limites de tamanho e validação básica, sem usá-los para conceder acesso à sala ou autoridade de anfitrião.
