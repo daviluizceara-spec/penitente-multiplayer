@@ -19,19 +19,19 @@ Base examinada: `Penitente_R9_17_Progressao_Encerramento (1).html`, commit `37c0
 
 - Duas teclas, ou teclado e mouse, compartilhavam a mesma origem de entrada. Soltar uma podia cancelar outra ainda pressionada. Cada tecla física e botão de mouse agora tem origem independente; fontes touch e controle foram preservadas.
 - As descrições da Couraça de Cinzas e da Armadura Obsidiana anunciavam +30/+60 de vida, mas o cálculo concedia +18/+36. Os textos foram alinhados aos efeitos reais, sem mexer no balanceamento.
-- Save principal ilegível agora é copiado para uma chave de recuperação antes de qualquer substituição. Se a cópia falhar, o salvamento automático fica bloqueado e há aviso na capa. A cópia continua nos dados locais do navegador; ainda não há ferramenta de exportação ou restauração pela interface.
+- Save principal ilegível agora é copiado para uma chave de recuperação antes de qualquer substituição. Se a cópia falhar, o salvamento automático fica bloqueado e há aviso na capa. A cópia continua nos dados locais e pode ser baixada em Configurações → Jogo e Dados; ainda não há restauração pela interface.
 - Slots manuais ilegíveis agora exibem aviso e bloqueiam alterações nos dados originais.
 - O comando `npm test` apontava para `test-server.js`, arquivo ausente. A suíte atual executa testes do navegador e uma sessão real do servidor com Socket.IO.
 
 ## Riscos e trabalho pendente
 
 - A análise detalhada e os testes de todas as áreas, chefes, NPCs, diálogos, cutscenes, finais, controles físicos e dispositivos ainda não foram concluídos. O catálogo é parcial quanto ao conteúdo dinâmico. A reconstrução metroidvania, revisão de movimento, combate, arte e interfaces pertencem às próximas entregas.
-- A recuperação do save principal preserva o conteúdo bruto, mas não repara dados corrompidos nem oferece restauração pela interface. Slots com JSON ilegível ficam protegidos contra escrita, mas também não há recuperação pela interface. Alterações de formato não foram introduzidas aqui.
+- O download preserva os dados brutos do save, slots e cópias, mas não repara dados corrompidos nem oferece restauração pela interface. Slots com JSON ilegível ficam protegidos contra escrita, mas também não há recuperação pela interface. Alterações de formato não foram introduzidas aqui.
 - O README antigo descrevia outro nome de HTML e testes ausentes. Seus resultados históricos não comprovam a execução dos testes desta versão.
 - Há diferenças entre o arquivo R9.17 e a identificação de rede `R9.1-rede`; não se deve presumir compatibilidade de todos os cenários multiplayer sem rodar o cliente real em dois dispositivos.
 
 ## Verificação executada
 
-`npm test` cobre carregamento da capa e início, combinação de teclas e mouse, um save anterior representativo, pulo/ataque/esquiva, controle simulado após toque, descrições de armaduras, proteção do save ilegível e criação/entrada/início de sala com dois clientes, além da preservação dos metadados de rede. Algumas ações do navegador usam preparação direta de estado para alcançar o trecho testado. O gamepad é simulado; não é um teste físico.
+`npm test` cobre carregamento da capa e início, combinação de teclas e mouse, um save anterior representativo, pulo/ataque/esquiva, controle simulado após toque, descrições de armaduras, proteção e download do save ilegível, abertura do mapa e navegação pelas abas do Arsenal, além da criação/entrada/início de sala com dois clientes, além da preservação dos metadados de rede. Algumas ações do navegador usam preparação direta de estado para alcançar o trecho testado. O gamepad é simulado; não é um teste físico.
 
-Não foram testados integralmente morte/renascimento, chefes, todos os diálogos, cutscenes, regiões e segredos, troca de área, mapa, NPCs, compras, árvore, bestiário, Ressonância, touch real, celulares/APKs, restauração de sessão cooperativa ou desempenho. É necessário percorrer a campanha e testar hardware e rede reais antes de afirmar compatibilidade geral.
+Não foram testados integralmente morte/renascimento, chefes, todos os diálogos, cutscenes, regiões e segredos, troca de área, uso completo do mapa, NPCs, compras, desbloqueios da árvore, registros do bestiário, Ressonância, touch real, celulares/APKs, restauração de sessão cooperativa ou desempenho. É necessário percorrer a campanha e testar hardware e rede reais antes de afirmar compatibilidade geral.

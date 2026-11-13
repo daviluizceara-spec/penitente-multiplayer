@@ -841,7 +841,7 @@ function loadSave(rawOv){
         let key=SAVE_KEY+'-recuperacao-'+Date.now(),n=0;
         while(localStorage.getItem(key)!==null)key=SAVE_KEY+'-recuperacao-'+Date.now()+'-'+(++n);
         localStorage.setItem(key,raw);
-        saveRecoveryNotice='O progresso anterior não pôde ser lido. Uma cópia foi guardada neste navegador.';
+        saveRecoveryNotice='O progresso anterior não pôde ser lido. Uma cópia foi guardada neste navegador. Acesse Configurações → Jogo e Dados para baixá-la.';
       }catch(_){saveWriteBlocked=true;storageOK=false;saveRecoveryNotice='Não foi possível ler ou proteger o progresso anterior. O salvamento automático foi pausado.'}
     }else if(rawOv===undefined){saveWriteBlocked=true;storageOK=false}
   }
@@ -14730,6 +14730,17 @@ function hubLore(){
 const OPT_TITLES={main:'Configurações',sound:'Música e Sons',controls:'Controles',keys:'Teclado e Mouse',touch:'Controles de Toque',game:'Jogo e Dados'};
 const OPT_PARENT={sound:'main',controls:'main',game:'main',keys:'controls',touch:'controls',pad:'controls'};
 const pct=v=>Math.round(v*100)+'%';
+/* Exporta os dados exatamente como guardados, inclusive cópias que não podem ser lidas pelo jogo. */
+function exportSaveData(){
+  try{
+    const keys=Object.keys(localStorage).filter(k=>k===SAVE_KEY||k===SLOTS_KEY||k.startsWith(SAVE_KEY+'-recuperacao-')).sort();
+    if(!keys.length){toast('Nenhum dado salvo para baixar');return}
+    const data={jogo:'Penitente: Inferno Eterno',formato:1,gerado:new Date().toISOString(),dados:{}};
+    for(const key of keys)data.dados[key]=localStorage.getItem(key);
+    const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
+    const link=document.createElement('a');link.href=url;link.download='penitente-dados.json';document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }catch(_){toast('Não foi possível baixar os dados deste navegador')}
+}
 function optsBody(){
   const s=SAVE.settings;
   const sl=(k,n)=>`<div class="set"><div style="display:flex;justify-content:space-between"><label for="o-${k}" class="lbl">${n}</label><span class="lbl pct">${pct(s[k])}</span></div><input id="o-${k}" type="range" min="0" max="1" step=".05" value="${s[k]}" data-set="${k}"></div>`;
@@ -14744,6 +14755,7 @@ function optsBody(){
       <button class="btn sm" data-act="treset" style="align-self:flex-start">Restaurar layout padrão</button></div>`;
     case'game':return`<div class="card">${diffPicker('opts')}<label class="switch"><input id="o-shake" type="checkbox" data-chk="shake" ${s.shake?'checked':''}> Tremor de tela</label><label class="switch"><input type="checkbox" data-chk="damageNumbers" ${s.damageNumbers?'checked':''}> Mostrar números de dano</label>
       <p class="tiny muted">${storageOK?'Progresso salvo automaticamente neste navegador.':'O armazenamento deste navegador está bloqueado: o progresso não é salvo.'}</p>
+      <button class="btn sm" data-act="export-save" style="align-self:flex-start">Baixar dados salvos</button><p class="tiny muted">Baixa os dados deste navegador, inclusive cópias de recuperação. Dados ilegíveis não são consertados automaticamente.</p>
       <button class="btn sm" data-act="reset" style="align-self:flex-start">Apagar progresso</button></div>`;
     default:return`<div class="optgrid"><button class="btn optbtn" data-act="opts-go" data-id="sound">Música e Sons…<small>Geral ${pct(s.master)}${s.mute?' · silenciado':''}</small></button><button class="btn optbtn" data-act="opts-go" data-id="controls">Controles…<small>Teclado, mouse e toque</small></button><button class="btn optbtn wide" data-act="opts-go" data-id="game">Jogo e Dados…<small>Tremor de tela, apagar progresso</small></button></div>`;
   }
@@ -16225,6 +16237,7 @@ UI.addEventListener('click',ev=>{
       if(!it.reward&&!SAVE.owned.includes(id)&&SAVE.level>=it.lvl&&SAVE.coins>=it.cost){gearPrev=null;SAVE.coins-=it.cost;SAVE.owned.push(id);SAVE.gear[it.slot]=id;saveGame();Aud.play('buy');toast('Equipado: '+it.n);renderHub()}else Aud.play('deny');break}
     case'equip':{const it=gearById(id);if(SAVE.owned.includes(id)){gearPrev=null;SAVE.gear[it.slot]=id;saveGame();Aud.play('ui');renderHub()}break}
     case'touch':SAVE.settings.touch=id;saveGame();Aud.play('ui');optsRefresh();updateTouchUI();break;
+    case'export-save':ui();exportSaveData();break;
     case'reset':ui();confirmBox('Apagar progresso','Todo o progresso salvo será removido.','Apagar tudo','do-reset');break;
     case'do-reset':{const set=SAVE.settings;SAVE=defaultSave();SAVE.settings=set;saveGame();Aud.applyVol();closeModal();if(!elHub.hidden){if(hubFrom==='play'){R=null}hubFrom='title';toTitle()}else renderTitleScreen();toast('Progresso apagado');break}
     case'pause-save':ui();slotCtx='pause';slotAsk=null;openModal(slotsHTML());break;

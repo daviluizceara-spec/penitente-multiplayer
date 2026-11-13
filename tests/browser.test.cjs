@@ -119,3 +119,31 @@ test('slots ilegíveis não são exibidos como vazios nem sobrescritos',async()=
   assert.equal(await page.evaluate(()=>localStorage.getItem(SLOTS_KEY)),raw);
   await page.close();
 });
+test('opções baixam dados originais e cópia ilegível sem alterar o armazenamento',async()=>{
+  const page=await browser.newPage({acceptDownloads:true});const raw='{save danificado';
+  await page.addInitScript(value=>localStorage.setItem('penitente-inferno-eterno-v1',value),raw);
+  await page.route('https://cdn.socket.io/**',route=>route.abort());await page.goto(base);
+  await page.locator('[data-act="opts-title"]').click();
+  await page.locator('[data-act="opts-go"][data-id="game"]').click();
+  const waiting=page.waitForEvent('download');await page.locator('[data-act="export-save"]').click();const download=await waiting;
+  assert.equal(download.suggestedFilename(),'penitente-dados.json');
+  const stream=await download.createReadStream(),chunks=[];for await(const chunk of stream)chunks.push(chunk);
+  const bundle=JSON.parse(Buffer.concat(chunks).toString('utf8'));
+  const backup=Object.keys(bundle.dados).find(k=>k.startsWith('penitente-inferno-eterno-v1-recuperacao-'));
+  assert.equal(bundle.dados[backup],raw);
+  assert.equal(await page.evaluate(k=>localStorage.getItem(k),backup),raw);
+  await page.close();
+});
+test('pausa abre mapa e permite navegar pelas abas principais do Arsenal',async()=>{
+  const page=await newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.evaluate(()=>{startArea(0,{fresh:true});R.state='play';R.dlg=null;R.card=null;R.P.inv=10;Input.clear()});
+  await page.keyboard.press('Escape');await page.locator('[data-act="pause-map"]').click();
+  assert.ok(await page.locator('#modalBox svg').count()>0,'mapa deve apresentar desenho');
+  await page.locator('#modalBox [data-act="pause-back"]').first().click();
+  await page.locator('[data-act="pause-arsenal"]').click();
+  for(const tab of ['skills','gear','best','lore']){
+    await page.locator(`[data-act="tab"][data-id="${tab}"]`).click();
+    assert.equal(await page.evaluate(()=>hubTab),tab);
+  }
+  assert.deepEqual(errors,[]);await page.close();
+});
