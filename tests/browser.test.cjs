@@ -478,3 +478,16 @@ test('arpão não mira automaticamente em inimigos que não pode puxar',async()=
   });
   assert.deepEqual(result,{facing:1,hit:true});await page.close();
 });
+test('direção automática escolhe inimigo visível em vez de alvo atrás de parede',async()=>{
+  const page=await newPage();
+  const result=await page.evaluate(()=>{
+    startArea(0,{fresh:true});R.state='play';R.dlg=null;R.E=[];R.PR=[];Input.clear();
+    Object.assign(R.P,{x:300,y:GY,f:-1,onGround:true});R.solids=[{x:286,y:GY-60,w:4,h:60}];
+    const hidden=spawnEnemy('soldier',280,{rise:0,active:true});const visible=spawnEnemy('soldier',330,{rise:0,active:true});
+    function facing(fn){R.P.f=-1;R.P.act=null;fn();return R.P.f}
+    const blocked={quick:facing(startQuick),heavy:facing(startHeavy),chain:facing(startChain)};
+    R.solids[0].dead=true;const open=facing(startQuick);
+    return {blocked,open};
+  });
+  assert.deepEqual(result,{blocked:{quick:1,heavy:1,chain:1},open:-1});await page.close();
+});

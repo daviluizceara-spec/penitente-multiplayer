@@ -9451,7 +9451,7 @@ function nearestFoe(r,vertical=null,filter=null){
   const P=R.P;let b=null,bd=r;
   for(const e of R.E){
     if(!enemyTargetable(e)||e.dead||e.rise>0||(filter&&!filter(e)))continue;
-    if(vertical){const box=eRect(e);if(box.y>=P.y+vertical[1]||box.y+box.h<=P.y-vertical[0])continue}
+    if(vertical){const box=eRect(e);if(box.y>=P.y+vertical[1]||box.y+box.h<=P.y-vertical[0]||!foeSight(e,P.x,P.y-20))continue}
     const d=Math.abs(e.x-P.x);if(d<bd){bd=d;b=e}
   }
   return b;
